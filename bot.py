@@ -19,6 +19,8 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
+    print("GAUTA:", message.content)
+
     if message.author.bot:
         return
 
