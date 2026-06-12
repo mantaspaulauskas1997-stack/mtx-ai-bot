@@ -19,8 +19,6 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
-    print("GAUTA:", message.content)
-
     if message.author.bot:
         return
 
@@ -36,7 +34,7 @@ async def on_message(message):
                 messages=[
                     {
                         "role": "system",
-                        "content": "{"role": "system", "content": "Tu esi MTX AI Discord botas."}
+                        "content": "Tu esi MTX AI Discord botas."
                     },
                     {
                         "role": "user",
