@@ -36,7 +36,7 @@ async def on_message(message):
                 messages=[
                     {
                         "role": "system",
-                        "content": "Tu esi MTX AI Discord botas."
+                        "content": "{"role": "system", "content": "Tu esi MTX AI Discord botas."}
                     },
                     {
                         "role": "user",
