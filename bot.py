@@ -15,6 +15,8 @@ DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 VALORANT_API_KEY = os.getenv("VALORANT_API_KEY")
 
+print("VALORANT KEY:", VALORANT_API_KEY)
+
 if not DISCORD_TOKEN:
     raise ValueError("❌ Nerastas DISCORD_TOKEN Railway Variables")
 
