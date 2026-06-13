@@ -1,3 +1,4 @@
+
 import os
 import time
 import json
@@ -42,14 +43,15 @@ VYRAS_ROLE_NAME = "Vyras"
 PANELE_ROLE_NAME = "Panelė"
 
 # ======================
-# VALORANT NUSTATYMAI
+# VALORANT
 # ======================
 
 VALORANT_REGION = "eu"
 VALORANT_UPDATE_HOURS = 12
 VALORANT_LINKS_FILE = "valorant_links.json"
 
-VERIFY_COOLDOWN_HOURS = 24
+# pakeista iš 24h į 4h
+VERIFY_COOLDOWN_HOURS = 4
 VERIFY_COOLDOWN_SECONDS = VERIFY_COOLDOWN_HOURS * 60 * 60
 
 VALORANT_RANK_ROLES = {
@@ -65,7 +67,7 @@ VALORANT_RANK_ROLES = {
 }
 
 # ======================
-# ANTI-SPAM NUSTATYMAI
+# ANTI-SPAM
 # ======================
 
 SPAM_WINDOW_SECONDS = 7
@@ -80,9 +82,9 @@ SPAM_DELETE_LOOKBACK_SECONDS = 15
 SPAM_OFFENSE_RESET_SECONDS = 24 * 60 * 60
 
 SPAM_PUNISHMENTS = [
-    60,      # 1 pažeidimas = 1 min
-    300,     # 2 pažeidimas = 5 min
-    3600     # 3+ pažeidimas = 1 val
+    60,
+    300,
+    3600
 ]
 
 # ======================
@@ -92,9 +94,9 @@ SPAM_PUNISHMENTS = [
 PROFANITY_RESET_SECONDS = 24 * 60 * 60
 
 PROFANITY_PUNISHMENTS = [
-    0,       # 1 kartas = tik įspėjimas
-    300,     # 2 kartas = 5 min
-    3600     # 3+ kartas = 1 val
+    0,
+    300,
+    3600
 ]
 
 SEVERE_PROFANITY_TIMEOUT = 3600
@@ -127,7 +129,6 @@ BAD_WORD_STEMS = [
     "pydar",
     "pidar",
 
-    # tavo papildomi žodžiai
     "niuh",
     "niuhas",
     "mantel",
@@ -137,7 +138,6 @@ BAD_WORD_STEMS = [
 ]
 
 SEVERE_WORD_STEMS = [
-    # savęs žalojimo / labai rimtos frazės
     "nusizudyk",
     "nusižudyk",
     "zudykis",
@@ -147,7 +147,6 @@ SEVERE_WORD_STEMS = [
     "kill yourself",
     "kys",
 
-    # grasinimai
     "papjausiu",
     "pjausiu",
     "nuzudysiu",
@@ -165,7 +164,6 @@ SEVERE_WORD_STEMS = [
     "uzmus",
     "užmus",
 
-    # rasistiniai / diskriminaciniai variantai
     "nyg",
     "nyga",
     "niga",
@@ -174,13 +172,11 @@ SEVERE_WORD_STEMS = [
     "n.y.g.a",
     "n-y-g-a",
 
-    # labai toksiški / diskriminaciniai žodžiai
     "ciurka",
     "čiurka",
     "zydas",
     "žydas",
 
-    # ekstremistiniai žodžiai
     "hitler",
     "nacis",
     "nazi",
@@ -196,7 +192,7 @@ SEVERE_WORD_STEMS = [
 client_ai = AsyncOpenAI(api_key=OPENAI_API_KEY)
 
 # ======================
-# DISCORD INTENTS
+# DISCORD
 # ======================
 
 intents = discord.Intents.default()
@@ -210,7 +206,7 @@ bot = commands.Bot(
 )
 
 # ======================
-# ATMINTIS IR COOLDOWNS
+# ATMINTIS
 # ======================
 
 user_memory = defaultdict(lambda: deque(maxlen=10))
@@ -226,7 +222,7 @@ profanity_offenses = defaultdict(lambda: {"count": 0, "last": 0})
 profanity_punish_cooldowns = {}
 
 # ======================
-# JSON DATABASE VALORANT
+# JSON DB
 # ======================
 
 def load_valorant_links():
@@ -259,7 +255,6 @@ def save_user_valorant_link(guild_id: int, user_id: int, name: str, tag: str, ra
     data = load_valorant_links()
     key = get_link_key(guild_id, user_id)
     now = int(time.time())
-
     old_data = data.get(key, {})
 
     data[key] = {
@@ -290,7 +285,7 @@ def update_user_last_rank(guild_id: int, user_id: int, rank: str):
     save_valorant_links(data)
 
 # ======================
-# PAGALBINĖS FUNKCIJOS
+# HELPERIAI
 # ======================
 
 def is_ai_channel(message: discord.Message) -> bool:
@@ -349,7 +344,7 @@ def get_base_valorant_rank(full_rank: str):
     return full_rank.split(" ")[0]
 
 # ======================
-# HENRIKDEV VALORANT API
+# HENRIKDEV API
 # ======================
 
 def fetch_valorant_rank_sync(name: str, tag: str):
@@ -436,7 +431,7 @@ async def update_valorant_rank_role(guild: discord.Guild, member: discord.Member
     return base_rank, target_role
 
 # ======================
-# VALORANT VERIFY FUNKCIJA
+# VALORANT VERIFY
 # ======================
 
 async def verify_valorant_account(message: discord.Message, riot_id: str):
@@ -450,7 +445,6 @@ async def verify_valorant_account(message: discord.Message, riot_id: str):
             return
 
         name, tag = riot_id.split("#", 1)
-
         name = name.strip()
         tag = tag.strip()
 
@@ -520,8 +514,28 @@ async def send_valorant_help(message: discord.Message):
         "`rank Vardas#TAG`\n\n"
         f"🔄 Rankas automatiškai atnaujinamas kas **{VALORANT_UPDATE_HOURS} val.**\n"
         f"⏳ Rank verify galima naudoti kas **{VERIFY_COOLDOWN_HOURS} val.**\n\n"
+        "🎮 MMR info: parašyk `mmr` arba `valorant mmr`\n\n"
         "🎭 Lyties rolės: parašyk `vyras`, `panele` arba `panelė`.\n\n"
         "💬 Valorant klausimus gali rašyti AI kanale arba su `!ask klausimas`.",
+        mention_author=False
+    )
+
+
+async def send_mmr_info(message: discord.Message):
+    await message.reply(
+        "🎮 **Valorant MMR**\n\n"
+        "**MMR (Matchmaking Rating)** yra paslėpta sistema, kuri nustato tavo sugebėjimus "
+        "ir padeda sukurti subalansuotus rungtynių poravimus.\n\n"
+        "Kuo geriau žaidi, tuo didesnis tavo MMR. Jei tavo MMR yra aukštesnis už dabartinį ranką, "
+        "gali gauti daugiau RR už pergalę ir prarasti mažiau RR už pralaimėjimą.\n\n"
+        "📈 **Kaip pagerinti MMR:**\n"
+        "• laimėk daugiau matchų;\n"
+        "• žaisk stabiliai;\n"
+        "• nedaryk tilt queue;\n"
+        "• komunikuok su komanda;\n"
+        "• turėk gerą impact žaidime;\n"
+        "• žaisk agentus, su kuriais esi stipriausias.\n\n"
+        "Jei turi klausimų dėl savo MMR arba kaip jį pagerinti, drąsiai klausk AI kanale.",
         mention_author=False
     )
 
@@ -529,6 +543,10 @@ async def send_valorant_help(message: discord.Message):
 async def handle_no_prefix_valorant(message: discord.Message):
     original = message.content.strip()
     content = original.lower()
+
+    if content in ["mmr", "valorant mmr", "kas yra mmr", "kas yra valorant mmr"]:
+        await send_mmr_info(message)
+        return True
 
     if content in [
         "valorant",
@@ -570,7 +588,7 @@ async def handle_no_prefix_valorant(message: discord.Message):
     return False
 
 # ======================
-# ANTI-SPAM SISTEMA
+# ANTI-SPAM
 # ======================
 
 def check_spam(message: discord.Message):
@@ -632,7 +650,6 @@ async def delete_recent_spam_messages(message: discord.Message):
     def check(msg: discord.Message):
         if msg.author.id != message.author.id:
             return False
-
         if msg.pinned:
             return False
 
@@ -678,7 +695,6 @@ async def handle_spam(message: discord.Message):
         return False
 
     spam_punish_cooldowns[user_id] = now
-
     offense_count, duration = get_spam_punishment(user_id)
 
     await delete_recent_spam_messages(message)
@@ -1006,29 +1022,17 @@ async def on_message(message: discord.Message):
     content = message.content.lower().strip()
     user_id = message.author.id
 
-    # ======================
-    # ANTI-SPAM
-    # ======================
-
     if await handle_spam(message):
         return
 
-    # ======================
-    # KEIKSMAŽODŽIŲ FILTRAS
-    # ======================
-
     if await handle_profanity(message):
         return
-
-    # ======================
-    # VALORANT BE ŠAUKTUKO
-    # ======================
 
     if await handle_no_prefix_valorant(message):
         return
 
     # ======================
-    # VYRAS / PANELĖ ROLĖS
+    # VYRAS / PANELĖ
     # ======================
 
     if content in ["vyras", "panelė", "panele"]:
@@ -1083,7 +1087,7 @@ async def on_message(message: discord.Message):
         return
 
     # ======================
-    # AI SISTEMA
+    # AI KANALAI
     # ======================
 
     if is_ai_channel(message):
@@ -1108,7 +1112,8 @@ async def on_message(message: discord.Message):
                         "Padėk žmonėms su Valorant: rankai, RR, MMR, agentai, mapai, crosshair, sensitivity, FPS, ping, klaidos, "
                         "beginner patarimai, aim training ir Discord rank sistema. "
                         "Jeigu klausia kaip gauti Valorant rank rolę, pasakyk: `verify Vardas#TAG`, pvz. `verify Jonas#EUW`. "
-                        "Rankas atnaujinamas kas 12 val., verify galima naudoti kas 24 val. "
+                        "Rankas atnaujinamas kas 12 val., verify galima naudoti kas 4 val. "
+                        "Jeigu klausia apie MMR, paaiškink, kad tai paslėptas Matchmaking Rating. "
                         "Jeigu klausia apie Vyras/Panelė roles, pasakyk parašyti `vyras`, `panele` arba `panelė`. "
                         "Primink laikytis tvarkos, nespaminti ir gerbti kitus. "
                         "Nepadėk su cheat, hack, spoof, Vanguard bypass, ban evasion, phishing ar kenkėjiška veikla."
@@ -1150,8 +1155,9 @@ async def info(ctx):
     await ctx.reply(
         "🤖 Aš esu **MTX AI** botas.\n\n"
         "🎮 **Valorant:** parašyk `valorant` arba `verify Vardas#TAG`\n"
+        "🎮 **MMR:** parašyk `mmr` arba `valorant mmr`\n"
         "🎭 **Rolės:** parašyk `vyras`, `panele` arba `panelė`\n"
-        "💬 **AI pagalba:** veikia kanaluose, kurių pavadinime yra `ai`, arba naudok `!ask klausimas`\n"
+        "💬 **AI pagalba:** veikia kanaluose `ai`, `ᴀɪ`, `ai-chat`, `ᴀɪ-ᴄʜᴀᴛ`, arba naudok `!ask klausimas`\n"
         "🧹 **Žinučių trynimas:** `!clear 100`\n\n"
         "⚠️ Laikykitės tvarkos — spam, keiksmažodžiai ir įžeidimai gali būti ištrinti ir uždėtas timeout.",
         mention_author=False
@@ -1160,15 +1166,7 @@ async def info(ctx):
 
 @bot.command(name="valorant", aliases=["vhelp", "rankhelp"])
 async def valorant_help(ctx):
-    await ctx.reply(
-        "🎮 **Valorant pagalba**\n\n"
-        "🏆 Rank rolė: parašyk `verify Vardas#TAG`\n"
-        "Pvz: `verify Jonas#EUW`\n\n"
-        f"🔄 Rankas automatiškai atnaujinamas kas **{VALORANT_UPDATE_HOURS} val.**\n"
-        f"⏳ Verify galima naudoti kas **{VERIFY_COOLDOWN_HOURS} val.**\n\n"
-        "🎭 Lyties rolės: parašyk `vyras`, `panele` arba `panelė`.",
-        mention_author=False
-    )
+    await send_valorant_help(ctx.message)
 
 
 @bot.command(name="clear", aliases=["valyti", "trinti"])
@@ -1266,7 +1264,7 @@ async def ask_ai(ctx, *, question: str):
                     "content": (
                         "Tu esi MTX AI Discord serverio pagalbininkas. "
                         "Atsakyk lietuviškai, draugiškai, aiškiai ir trumpai. "
-                        "Padėk su Valorant: rankai, agentai, crosshair, sensitivity, FPS, klaidos, "
+                        "Padėk su Valorant: rankai, MMR, RR, agentai, crosshair, sensitivity, FPS, klaidos, "
                         "rank roles Discorde, `verify Vardas#TAG`, ir bendrais serverio klausimais. "
                         "Nepadėk su cheat, hack, spoof, Vanguard bypass ar nelegalia veikla."
                     )
