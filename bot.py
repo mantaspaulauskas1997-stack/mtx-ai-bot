@@ -4,19 +4,15 @@ import discord
 from discord.ext import commands
 from openai import AsyncOpenAI
 from collections import defaultdict, deque
-
+import requests
 # ======================
 # KONFIGŪRACIJA
 # ======================
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+VALORANT_API_KEY = os.getenv("VALORANT_API_KEY")
 
 if not DISCORD_TOKEN:
-    raise ValueError("❌ Nerastas DISCORD_TOKEN Railway Variables")
-
-if not OPENAI_API_KEY:
-    raise ValueError("❌ Nerastas OPENAI_API_KEY Railway Variables")
-
 AI_MODEL = "gpt-4o-mini"
 
 AI_COOLDOWN = 30
@@ -283,7 +279,35 @@ async def clear(ctx, amount: int = 10):
             f"❌ Klaida trinant žinutes: {e}",
             mention_author=False
         )
+@bot.command(name="verify")
+async def verify(ctx, *, riot_id: str):
+    try:
+        if "#" not in riot_id:
+            await ctx.reply("❌ Naudok: !verify Vardas#TAG")
+            return
 
+        name, tag = riot_id.split("#", 1)
+
+        headers = {
+            "Authorization": VALORANT_API_KEY
+        }
+
+        url = f"https://api.henrikdev.xyz/valorant/v1/mmr/eu/{name}/{tag}"
+
+        response = requests.get(url, headers=headers)
+
+        if response.status_code != 200:
+            await ctx.reply(f"❌ API klaida: {response.status_code}")
+            return
+
+        data = response.json()
+
+        rank = data["data"]["currenttierpatched"]
+
+        await ctx.reply(f"🏆 Tavo rangas: {rank}")
+
+    except Exception as e:
+        await ctx.reply(f"❌ Klaida: {e}")
 
 # ======================
 # KOMANDŲ KLAIDOS
