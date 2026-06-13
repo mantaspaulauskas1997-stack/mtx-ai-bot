@@ -300,9 +300,9 @@ async def verify(ctx, *, riot_id: str):
 
         name, tag = riot_id.split("#", 1)
 
-        headers = {
-            "Authorization": VALORANT_API_KEY
-        }
+headers = {
+    "X-API-Key": VALORANT_API_KEY
+}
 
         url = f"https://api.henrikdev.xyz/valorant/v1/mmr/eu/{name}/{tag}"
 
