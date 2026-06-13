@@ -1,3 +1,4 @@
+``py
 import os
 import time
 import json
@@ -5,6 +6,7 @@ import asyncio
 import requests
 import discord
 
+from datetime import timedelta
 from urllib.parse import quote
 from discord.ext import commands, tasks
 from openai import AsyncOpenAI
@@ -29,7 +31,6 @@ if not OPENAI_API_KEY:
 if not VALORANT_API_KEY:
     raise ValueError("❌ Nerastas VALORANT_API_KEY Railway Variables")
 
-
 AI_MODEL = "gpt-4o-mini"
 
 AI_COOLDOWN = 30
@@ -39,10 +40,16 @@ MAX_CLEAR_MESSAGES = 500
 VYRAS_ROLE_NAME = "Vyras"
 PANELE_ROLE_NAME = "Panelė"
 
-# Valorant nustatymai
+# ======================
+# VALORANT NUSTATYMAI
+# ======================
+
 VALORANT_REGION = "eu"
 VALORANT_UPDATE_HOURS = 12
 VALORANT_LINKS_FILE = "valorant_links.json"
+
+VERIFY_COOLDOWN_HOURS = 24
+VERIFY_COOLDOWN_SECONDS = VERIFY_COOLDOWN_HOURS * 60 * 60
 
 VALORANT_RANK_ROLES = {
     "Iron": "Iron",
@@ -55,6 +62,27 @@ VALORANT_RANK_ROLES = {
     "Immortal": "Immortal",
     "Radiant": "Radiant"
 }
+
+# ======================
+# ANTI-SPAM NUSTATYMAI
+# ======================
+
+SPAM_WINDOW_SECONDS = 7
+SPAM_MAX_MESSAGES = 5
+
+DUPLICATE_WINDOW_SECONDS = 10
+DUPLICATE_MAX_MESSAGES = 3
+
+SPAM_DELETE_LIMIT = 20
+SPAM_DELETE_LOOKBACK_SECONDS = 15
+
+SPAM_OFFENSE_RESET_SECONDS = 24 * 60 * 60
+
+SPAM_PUNISHMENTS = [
+    60,      # 1 pažeidimas = 1 min
+    300,     # 2 pažeidimas = 5 min
+    3600     # 3+ pažeidimas = 1 val
+]
 
 # ======================
 # OPENAI
@@ -81,8 +109,13 @@ bot = commands.Bot(
 # ======================
 
 user_memory = defaultdict(lambda: deque(maxlen=10))
+
 ai_cooldowns = {}
 role_cooldowns = {}
+
+spam_messages = defaultdict(lambda: deque(maxlen=30))
+spam_offenses = defaultdict(lambda: {"count": 0, "last": 0})
+spam_punish_cooldowns = {}
 
 # ======================
 # JSON DATABASE VALORANT
@@ -108,9 +141,18 @@ def get_link_key(guild_id: int, user_id: int):
     return f"{guild_id}:{user_id}"
 
 
+def get_user_valorant_link(guild_id: int, user_id: int):
+    data = load_valorant_links()
+    key = get_link_key(guild_id, user_id)
+    return data.get(key)
+
+
 def save_user_valorant_link(guild_id: int, user_id: int, name: str, tag: str, rank: str):
     data = load_valorant_links()
     key = get_link_key(guild_id, user_id)
+    now = int(time.time())
+
+    old_data = data.get(key, {})
 
     data[key] = {
         "guild_id": guild_id,
@@ -119,7 +161,9 @@ def save_user_valorant_link(guild_id: int, user_id: int, name: str, tag: str, ra
         "tag": tag,
         "region": VALORANT_REGION,
         "last_rank": rank,
-        "updated_at": int(time.time())
+        "updated_at": now,
+        "manual_verified_at": now,
+        "created_at": old_data.get("created_at", now)
     }
 
     save_valorant_links(data)
@@ -136,7 +180,6 @@ def update_user_last_rank(guild_id: int, user_id: int, rank: str):
     data[key]["updated_at"] = int(time.time())
 
     save_valorant_links(data)
-
 
 # ======================
 # PAGALBINĖS FUNKCIJOS
@@ -169,12 +212,27 @@ async def safe_reply(message: discord.Message, text: str):
     )
 
 
+def discord_relative_time(timestamp: int):
+    return f"<t:{timestamp}:R>"
+
+
+def format_duration(seconds: int):
+    if seconds >= 3600:
+        return f"{seconds // 3600} val."
+    if seconds >= 60:
+        return f"{seconds // 60} min."
+    return f"{seconds} sek."
+
+
 def get_base_valorant_rank(full_rank: str):
     if not full_rank:
         return None
 
     return full_rank.split(" ")[0]
 
+# ======================
+# HENRIKDEV VALORANT API
+# ======================
 
 def fetch_valorant_rank_sync(name: str, tag: str):
     encoded_name = quote(name, safe="")
@@ -259,15 +317,296 @@ async def update_valorant_rank_role(guild: discord.Guild, member: discord.Member
 
     return base_rank, target_role
 
+# ======================
+# VALORANT VERIFY FUNKCIJA
+# ======================
+
+async def verify_valorant_account(message: discord.Message, riot_id: str):
+    try:
+        if "#" not in riot_id:
+            await message.reply(
+                "❌ Naudok taip: `verify Vardas#TAG`\n"
+                "Pvz: `verify Jonas#EUW`",
+                mention_author=False
+            )
+            return
+
+        name, tag = riot_id.split("#", 1)
+
+        name = name.strip()
+        tag = tag.strip()
+
+        if not name or not tag:
+            await message.reply(
+                "❌ Blogas formatas. Naudok: `verify Vardas#TAG`",
+                mention_author=False
+            )
+            return
+
+        existing_link = get_user_valorant_link(message.guild.id, message.author.id)
+
+        if existing_link:
+            last_manual_verify = existing_link.get("manual_verified_at", 0)
+            now = int(time.time())
+            remaining = VERIFY_COOLDOWN_SECONDS - (now - last_manual_verify)
+
+            if remaining > 0:
+                next_verify_at = last_manual_verify + VERIFY_COOLDOWN_SECONDS
+
+                await message.reply(
+                    f"⏳ Rank verify gali naudoti tik kas **{VERIFY_COOLDOWN_HOURS} val.**\n"
+                    f"Bandyk vėl: **{discord_relative_time(next_verify_at)}**\n"
+                    f"🕒 Tikslus laikas: <t:{next_verify_at}:F>",
+                    mention_author=False
+                )
+                return
+
+        async with message.channel.typing():
+            rank, rr, elo = await fetch_valorant_rank(name, tag)
+            base_rank, role = await update_valorant_rank_role(message.guild, message.author, rank)
+
+            save_user_valorant_link(
+                guild_id=message.guild.id,
+                user_id=message.author.id,
+                name=name,
+                tag=tag,
+                rank=rank
+            )
+
+        next_verify_at = int(time.time()) + VERIFY_COOLDOWN_SECONDS
+
+        await message.reply(
+            f"✅ Valorant paskyra patikrinta: **{name}#{tag}**\n"
+            f"🏆 Rankas: **{rank}**\n"
+            f"📊 RR: **{rr}**\n"
+            f"🔢 ELO: **{elo}**\n"
+            f"🎭 Uždėta rolė: **{role.name}**\n"
+            f"🔄 Rankas bus automatiškai tikrinamas kas **{VALORANT_UPDATE_HOURS} val.**\n"
+            f"⏳ Rank verify vėl galėsi naudoti: **{discord_relative_time(next_verify_at)}**",
+            mention_author=False
+        )
+
+    except Exception as e:
+        await message.reply(
+            f"❌ Klaida tikrinant Valorant ranką: {e}",
+            mention_author=False
+        )
+
+
+async def send_valorant_help(message: discord.Message):
+    await message.reply(
+        "🎮 **Valorant pagalba**\n\n"
+        "🏆 Rank rolė: parašyk `verify Vardas#TAG`\n"
+        "Pvz: `verify Jonas#EUW`\n\n"
+        "Taip pat gali rašyti:\n"
+        "`rank Vardas#TAG`\n\n"
+        f"🔄 Rankas automatiškai atnaujinamas kas **{VALORANT_UPDATE_HOURS} val.**\n"
+        f"⏳ Rank verify galima naudoti kas **{VERIFY_COOLDOWN_HOURS} val.**\n\n"
+        "🎭 Lyties rolės: parašyk `vyras`, `panele` arba `panelė`.\n\n"
+        "💬 Valorant klausimus gali rašyti AI kanale arba su `!ask klausimas`.",
+        mention_author=False
+    )
+
+
+async def handle_no_prefix_valorant(message: discord.Message):
+    original = message.content.strip()
+    content = original.lower()
+
+    if content in [
+        "valorant",
+        "rankai",
+        "rank",
+        "valorant rank",
+        "valorant help",
+        "pagalba valorant",
+        "kaip gauti rank",
+        "kaip gauti ranka",
+        "kaip gauti rank rolę",
+        "kaip gauti rank role"
+    ]:
+        await send_valorant_help(message)
+        return True
+
+    if content in ["verify", "patikrinti", "rankas"]:
+        await message.reply(
+            "❌ Naudok taip: `verify Vardas#TAG`\n"
+            "Pvz: `verify Jonas#EUW`",
+            mention_author=False
+        )
+        return True
+
+    prefixes = [
+        "verify ",
+        "rank ",
+        "rankas ",
+        "patikrinti ",
+        "patikrink "
+    ]
+
+    for prefix in prefixes:
+        if content.startswith(prefix):
+            riot_id = original[len(prefix):].strip()
+            await verify_valorant_account(message, riot_id)
+            return True
+
+    return False
 
 # ======================
-# AUTO VALORANT UPDATE KAS 12 VAL.
+# ANTI-SPAM SISTEMA
 # ======================
 
-@tasks.loop(hours=VALORANT_UPDATE_HOURS)
-async def valorant_rank_auto_update():
-    await bot.wait_until_ready()
+def check_spam(message: discord.Message):
+    user_id = message.author.id
+    now = time.time()
 
+    content = message.content.lower().strip()
+
+    if not content:
+        content = "[empty_or_attachment]"
+
+    spam_messages[user_id].append({
+        "time": now,
+        "content": content
+    })
+
+    recent_messages = [
+        item for item in spam_messages[user_id]
+        if now - item["time"] <= SPAM_WINDOW_SECONDS
+    ]
+
+    if len(recent_messages) >= SPAM_MAX_MESSAGES:
+        return "per daug žinučių per trumpą laiką"
+
+    duplicate_messages = [
+        item for item in spam_messages[user_id]
+        if now - item["time"] <= DUPLICATE_WINDOW_SECONDS and item["content"] == content
+    ]
+
+    if len(duplicate_messages) >= DUPLICATE_MAX_MESSAGES:
+        return "kartojamos tos pačios žinutės"
+
+    if len(message.mentions) >= 5:
+        return "mention spam"
+
+    return None
+
+
+def get_spam_punishment(user_id: int):
+    now = int(time.time())
+    record = spam_offenses[user_id]
+
+    if record["last"] and now - record["last"] >= SPAM_OFFENSE_RESET_SECONDS:
+        record["count"] = 0
+
+    record["count"] += 1
+    record["last"] = now
+
+    offense_count = record["count"]
+    punishment_index = min(offense_count - 1, len(SPAM_PUNISHMENTS) - 1)
+    duration = SPAM_PUNISHMENTS[punishment_index]
+
+    return offense_count, duration
+
+
+async def delete_recent_spam_messages(message: discord.Message):
+    now = discord.utils.utcnow()
+
+    def check(msg: discord.Message):
+        if msg.author.id != message.author.id:
+            return False
+
+        if msg.pinned:
+            return False
+
+        age = (now - msg.created_at).total_seconds()
+        return age <= SPAM_DELETE_LOOKBACK_SECONDS
+
+    try:
+        await message.channel.purge(
+            limit=SPAM_DELETE_LIMIT,
+            check=check,
+            bulk=True
+        )
+    except Exception:
+        try:
+            await message.delete()
+        except Exception:
+            pass
+
+
+async def handle_spam(message: discord.Message):
+    if not message.guild:
+        return False
+
+    if message.author.bot:
+        return False
+
+    if message.author.guild_permissions.administrator:
+        return False
+
+    if message.author.guild_permissions.manage_messages:
+        return False
+
+    user_id = message.author.id
+    now = time.time()
+
+    if user_id in spam_punish_cooldowns:
+        if now - spam_punish_cooldowns[user_id] < 10:
+            return True
+
+    spam_reason = check_spam(message)
+
+    if not spam_reason:
+        return False
+
+    spam_punish_cooldowns[user_id] = now
+
+    offense_count, duration = get_spam_punishment(user_id)
+
+    await delete_recent_spam_messages(message)
+
+    warning_text = (
+        f"⚠️ {message.author.mention}, **laikykitės tvarkos**.\n"
+        f"Priežastis: **{spam_reason}**\n"
+        f"Pažeidimas: **{offense_count}**\n"
+        f"Skirtas timeout: **{format_duration(duration)}**"
+    )
+
+    try:
+        until = discord.utils.utcnow() + timedelta(seconds=duration)
+
+        await message.author.timeout(
+            until,
+            reason=f"Anti-spam: {spam_reason}"
+        )
+
+        await message.channel.send(
+            warning_text,
+            allowed_mentions=discord.AllowedMentions(users=True)
+        )
+
+    except discord.Forbidden:
+        await message.channel.send(
+            f"⚠️ {message.author.mention}, **laikykitės tvarkos**.\n"
+            f"Spam žinutės ištrintos, bet negaliu uždėti timeout.\n"
+            f"Reikia **Moderate Members** teisės ir boto rolė turi būti aukščiau.",
+            allowed_mentions=discord.AllowedMentions(users=True)
+        )
+
+    except Exception as e:
+        await message.channel.send(
+            f"⚠️ {message.author.mention}, **laikykitės tvarkos**.\n"
+            f"Nepavyko pritaikyti bausmės: `{e}`",
+            allowed_mentions=discord.AllowedMentions(users=True)
+        )
+
+    return True
+
+# ======================
+# AUTO VALORANT UPDATE
+# ======================
+
+async def update_all_valorant_ranks():
     data = load_valorant_links()
 
     if not data:
@@ -312,7 +651,6 @@ async def valorant_rank_auto_update():
                 print(f"✅ {name}#{tag}: {new_rank}")
 
             updated += 1
-
             await asyncio.sleep(2)
 
         except Exception as e:
@@ -322,6 +660,11 @@ async def valorant_rank_auto_update():
 
     print(f"✅ Valorant auto update baigtas. Updated: {updated}, Failed: {failed}")
 
+
+@tasks.loop(hours=VALORANT_UPDATE_HOURS)
+async def valorant_rank_auto_update():
+    await bot.wait_until_ready()
+    await update_all_valorant_ranks()
 
 # ======================
 # BOT READY
@@ -341,7 +684,6 @@ async def on_ready():
         valorant_rank_auto_update.start()
         print(f"✅ Valorant rank auto update paleistas kas {VALORANT_UPDATE_HOURS} val.")
 
-
 # ======================
 # ŽINUČIŲ LOGIKA
 # ======================
@@ -360,6 +702,20 @@ async def on_message(message: discord.Message):
 
     content = message.content.lower().strip()
     user_id = message.author.id
+
+    # ======================
+    # ANTI-SPAM
+    # ======================
+
+    if await handle_spam(message):
+        return
+
+    # ======================
+    # VALORANT BE ŠAUKTUKO
+    # ======================
+
+    if await handle_no_prefix_valorant(message):
+        return
 
     # ======================
     # VYRAS / PANELĖ ROLĖS
@@ -390,8 +746,9 @@ async def on_message(message: discord.Message):
             return
 
         target_role = vyras_role if content == "vyras" else panele_role
+        remove_role = panele_role if content == "vyras" else vyras_role
 
-        if bot_member.top_role <= target_role:
+        if bot_member.top_role <= target_role or bot_member.top_role <= remove_role:
             await safe_reply(
                 message,
                 "❌ Mano rolė per žemai. Pakelk boto rolę aukščiau už **Vyras** ir **Panelė**."
@@ -399,17 +756,14 @@ async def on_message(message: discord.Message):
             return
 
         try:
-            if content == "vyras":
-                await message.author.add_roles(vyras_role, reason="Vyras/Panelė pasirinkimas")
-                await message.author.remove_roles(panele_role, reason="Vyras/Panelė pasirinkimas")
-                await safe_reply(message, "✅ Gavai rolę: **Vyras**")
+            await message.author.add_roles(target_role, reason="Vyras/Panelė pasirinkimas")
 
-            elif content in ["panelė", "panele"]:
-                await message.author.add_roles(panele_role, reason="Vyras/Panelė pasirinkimas")
-                await message.author.remove_roles(vyras_role, reason="Vyras/Panelė pasirinkimas")
-                await safe_reply(message, "✅ Gavai rolę: **Panelė**")
+            if remove_role in message.author.roles:
+                await message.author.remove_roles(remove_role, reason="Vyras/Panelė pasirinkimas")
 
             role_cooldowns[user_id] = time.time()
+
+            await safe_reply(message, f"✅ Gavai rolę: **{target_role.name}**")
 
         except discord.Forbidden:
             await safe_reply(message, "❌ Neturiu teisių duoti arba nuimti šios rolės.")
@@ -439,9 +793,15 @@ async def on_message(message: discord.Message):
                 {
                     "role": "system",
                     "content": (
-                        "Tu esi MTX AI Discord botas. "
-                        "Atsakyk lietuviškai, draugiškai, aiškiai ir natūraliai. "
-                        "Nenaudok per ilgų atsakymų, nebent vartotojas prašo detaliai."
+                        "Tu esi MTX AI Discord serverio pagalbininkas. "
+                        "Atsakyk lietuviškai, draugiškai, aiškiai ir trumpai. "
+                        "Padėk žmonėms su Valorant: rankai, RR, MMR, agentai, mapai, crosshair, sensitivity, FPS, ping, klaidos, "
+                        "beginner patarimai, aim training ir Discord rank sistema. "
+                        "Jeigu klausia kaip gauti Valorant rank rolę, pasakyk: `verify Vardas#TAG`, pvz. `verify Jonas#EUW`. "
+                        "Rankas atnaujinamas kas 12 val., verify galima naudoti kas 24 val. "
+                        "Jeigu klausia apie Vyras/Panelė roles, pasakyk parašyti `vyras`, `panele` arba `panelė`. "
+                        "Primink laikytis tvarkos, nespaminti ir gerbti kitus. "
+                        "Nepadėk su cheat, hack, spoof, Vanguard bypass, ban evasion, phishing ar kenkėjiška veikla."
                     )
                 }
             ]
@@ -466,7 +826,6 @@ async def on_message(message: discord.Message):
         except Exception as e:
             await safe_reply(message, f"❌ AI klaida: {e}")
 
-
 # ======================
 # KOMANDOS
 # ======================
@@ -479,11 +838,25 @@ async def ping(ctx):
 @bot.command(name="info")
 async def info(ctx):
     await ctx.reply(
-        "🤖 Aš esu **MTX AI** botas.\n"
-        "Parašyk `vyras` arba `panele`, kad gautum rolę.\n"
-        "AI veikia kanaluose, kurių pavadinime yra `ai`.\n"
-        "Valorant rank verify: `!verify Vardas#TAG`.\n"
-        "Žinučių trynimas: `!clear 100` arba `!clear 500`.",
+        "🤖 Aš esu **MTX AI** botas.\n\n"
+        "🎮 **Valorant:** parašyk `valorant` arba `verify Vardas#TAG`\n"
+        "🎭 **Rolės:** parašyk `vyras`, `panele` arba `panelė`\n"
+        "💬 **AI pagalba:** veikia kanaluose, kurių pavadinime yra `ai`, arba naudok `!ask klausimas`\n"
+        "🧹 **Žinučių trynimas:** `!clear 100`\n\n"
+        "⚠️ Laikykitės tvarkos — spam gali būti ištrintas ir uždėtas timeout.",
+        mention_author=False
+    )
+
+
+@bot.command(name="valorant", aliases=["vhelp", "rankhelp"])
+async def valorant_help(ctx):
+    await ctx.reply(
+        "🎮 **Valorant pagalba**\n\n"
+        "🏆 Rank rolė: parašyk `verify Vardas#TAG`\n"
+        "Pvz: `verify Jonas#EUW`\n\n"
+        f"🔄 Rankas automatiškai atnaujinamas kas **{VALORANT_UPDATE_HOURS} val.**\n"
+        f"⏳ Verify galima naudoti kas **{VERIFY_COOLDOWN_HOURS} val.**\n\n"
+        "🎭 Lyties rolės: parašyk `vyras`, `panele` arba `panelė`.",
         mention_author=False
     )
 
@@ -538,53 +911,11 @@ async def clear(ctx, amount: int = 10):
 
 @bot.command(name="verify")
 async def verify(ctx, *, riot_id: str):
-    try:
-        if "#" not in riot_id:
-            await ctx.reply(
-                "❌ Naudok taip: `!verify Vardas#TAG`\nPvz: `!verify Jonas#EUW`",
-                mention_author=False
-            )
-            return
+    if ctx.guild is None:
+        await ctx.reply("❌ Ši komanda veikia tik serveryje.", mention_author=False)
+        return
 
-        name, tag = riot_id.split("#", 1)
-
-        name = name.strip()
-        tag = tag.strip()
-
-        if not name or not tag:
-            await ctx.reply(
-                "❌ Blogas formatas. Naudok: `!verify Vardas#TAG`",
-                mention_author=False
-            )
-            return
-
-        async with ctx.typing():
-            rank, rr, elo = await fetch_valorant_rank(name, tag)
-            base_rank, role = await update_valorant_rank_role(ctx.guild, ctx.author, rank)
-
-            save_user_valorant_link(
-                guild_id=ctx.guild.id,
-                user_id=ctx.author.id,
-                name=name,
-                tag=tag,
-                rank=rank
-            )
-
-        await ctx.reply(
-            f"✅ Valorant paskyra patikrinta: **{name}#{tag}**\n"
-            f"🏆 Rankas: **{rank}**\n"
-            f"📊 RR: **{rr}**\n"
-            f"🔢 ELO: **{elo}**\n"
-            f"🎭 Uždėta rolė: **{role.name}**\n"
-            f"🔄 Rankas bus automatiškai tikrinamas kas **{VALORANT_UPDATE_HOURS} val.**",
-            mention_author=False
-        )
-
-    except Exception as e:
-        await ctx.reply(
-            f"❌ Klaida tikrinant Valorant ranką: {e}",
-            mention_author=False
-        )
+    await verify_valorant_account(ctx.message, riot_id)
 
 
 @bot.command(name="valorantupdate", aliases=["rankupdate"])
@@ -593,11 +924,72 @@ async def manual_valorant_update(ctx):
     await ctx.reply("🔄 Paleidžiu rankų atnaujinimą rankiniu būdu...", mention_author=False)
 
     try:
-        await valorant_rank_auto_update()
+        await update_all_valorant_ranks()
         await ctx.send("✅ Rankų atnaujinimas baigtas.")
     except Exception as e:
         await ctx.send(f"❌ Klaida paleidžiant rankų update: {e}")
 
+
+@bot.command(name="ask", aliases=["ai", "klausimas"])
+async def ask_ai(ctx, *, question: str):
+    user_id = ctx.author.id
+
+    remaining = cooldown_left(ai_cooldowns, user_id, AI_COOLDOWN)
+
+    if remaining > 0:
+        await ctx.reply(
+            f"⏳ Palauk {remaining}s prieš kitą AI klausimą.",
+            mention_author=False
+        )
+        return
+
+    try:
+        async with ctx.typing():
+            user_memory[user_id].append({
+                "role": "user",
+                "content": question
+            })
+
+            messages = [
+                {
+                    "role": "system",
+                    "content": (
+                        "Tu esi MTX AI Discord serverio pagalbininkas. "
+                        "Atsakyk lietuviškai, draugiškai, aiškiai ir trumpai. "
+                        "Padėk su Valorant: rankai, agentai, crosshair, sensitivity, FPS, klaidos, "
+                        "rank roles Discorde, `verify Vardas#TAG`, ir bendrais serverio klausimais. "
+                        "Nepadėk su cheat, hack, spoof, Vanguard bypass ar nelegalia veikla."
+                    )
+                }
+            ]
+
+            messages.extend(list(user_memory[user_id]))
+
+            response = await client_ai.chat.completions.create(
+                model=AI_MODEL,
+                messages=messages
+            )
+
+            reply = response.choices[0].message.content or "Atsiprašau, nepavyko sugeneruoti atsakymo."
+
+            user_memory[user_id].append({
+                "role": "assistant",
+                "content": reply
+            })
+
+            await ctx.reply(
+                reply[:1900],
+                mention_author=False,
+                allowed_mentions=discord.AllowedMentions.none()
+            )
+
+            ai_cooldowns[user_id] = time.time()
+
+    except Exception as e:
+        await ctx.reply(
+            f"❌ AI klaida: {e}",
+            mention_author=False
+        )
 
 # ======================
 # KOMANDŲ KLAIDOS
@@ -620,12 +1012,17 @@ async def on_command_error(ctx, error):
     elif isinstance(error, commands.MissingRequiredArgument):
         if ctx.command and ctx.command.name == "verify":
             await ctx.reply(
-                "❌ Naudok taip: `!verify Vardas#TAG`",
+                "❌ Naudok taip: `!verify Vardas#TAG` arba `verify Vardas#TAG`",
                 mention_author=False
             )
         elif ctx.command and ctx.command.name == "clear":
             await ctx.reply(
                 "❌ Naudok taip: `!clear 100`",
+                mention_author=False
+            )
+        elif ctx.command and ctx.command.name == "ask":
+            await ctx.reply(
+                "❌ Naudok taip: `!ask tavo klausimas`",
                 mention_author=False
             )
         else:
@@ -648,7 +1045,6 @@ async def on_command_error(ctx, error):
             f"❌ Komandos klaida: {error}",
             mention_author=False
         )
-
 
 # ======================
 # PALEIDIMAS
