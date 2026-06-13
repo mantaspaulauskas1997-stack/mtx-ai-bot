@@ -4,6 +4,8 @@ import json
 import asyncio
 import requests
 import discord
+import re
+import unicodedata
 
 from datetime import timedelta
 from urllib.parse import quote
@@ -84,6 +86,65 @@ SPAM_PUNISHMENTS = [
 ]
 
 # ======================
+# KEIKSMAŽODŽIŲ FILTRAS
+# ======================
+
+PROFANITY_RESET_SECONDS = 24 * 60 * 60
+
+PROFANITY_PUNISHMENTS = [
+    0,       # 1 kartas = tik įspėjimas
+    300,     # 2 kartas = 5 min
+    3600     # 3+ kartas = 1 val
+]
+
+SEVERE_PROFANITY_TIMEOUT = 3600
+
+BAD_WORD_STEMS = [
+    "kurv",
+    "byb",
+    "pisk",
+    "pizd",
+    "nahui",
+    "naxui",
+    "nx",
+    "debil",
+    "duch",
+    "gaid",
+    "lop",
+    "asil",
+    "durn",
+    "idiot",
+    "suka",
+    "padla",
+    "ciulp",
+    "čiulp",
+    "kekš",
+    "keks",
+    "urod",
+    "dalbaj",
+    "daun",
+    "pyder",
+    "pydar",
+    "pidar"
+]
+
+SEVERE_WORD_STEMS = [
+    "nusizudyk",
+    "nusižudyk",
+    "zudykis",
+    "žudykis",
+    "uzsimusk",
+    "užsimušk",
+    "kill yourself",
+    "kys",
+    "papjausiu",
+    "nuzudysiu",
+    "nužudysiu",
+    "uzmusiu",
+    "užmušiu"
+]
+
+# ======================
 # OPENAI
 # ======================
 
@@ -115,6 +176,9 @@ role_cooldowns = {}
 spam_messages = defaultdict(lambda: deque(maxlen=30))
 spam_offenses = defaultdict(lambda: {"count": 0, "last": 0})
 spam_punish_cooldowns = {}
+
+profanity_offenses = defaultdict(lambda: {"count": 0, "last": 0})
+profanity_punish_cooldowns = {}
 
 # ======================
 # JSON DATABASE VALORANT
@@ -190,7 +254,17 @@ def is_ai_channel(message: discord.Message) -> bool:
     parent = getattr(message.channel, "parent", None)
     parent_name = getattr(parent, "name", "").lower() if parent else ""
 
-    return "ai" in channel_name or "ai" in parent_name
+    ai_keywords = [
+        "ai",
+        "ᴀɪ",
+        "ai-chat",
+        "ᴀɪ-ᴄʜᴀᴛ"
+    ]
+
+    return (
+        any(keyword in channel_name for keyword in ai_keywords)
+        or any(keyword in parent_name for keyword in ai_keywords)
+    )
 
 
 def cooldown_left(cooldowns: dict, user_id: int, cooldown: int) -> int:
@@ -602,6 +676,191 @@ async def handle_spam(message: discord.Message):
     return True
 
 # ======================
+# KEIKSMAŽODŽIŲ FILTRAS
+# ======================
+
+def normalize_bad_text(text: str):
+    text = text.lower()
+
+    normalized = unicodedata.normalize("NFKD", text)
+    text = "".join(char for char in normalized if not unicodedata.combining(char))
+
+    replacements = {
+        "0": "o",
+        "1": "i",
+        "3": "e",
+        "4": "a",
+        "@": "a",
+        "$": "s",
+        "€": "e"
+    }
+
+    for old, new in replacements.items():
+        text = text.replace(old, new)
+
+    return text
+
+
+def contains_filtered_word(text: str):
+    normalized = normalize_bad_text(text)
+
+    spaced = normalized
+    compact = re.sub(r"[^a-zA-Z0-9]", "", normalized)
+    tokens = re.findall(r"\b\w+\b", normalized)
+
+    for word in SEVERE_WORD_STEMS:
+        clean_word = normalize_bad_text(word)
+        clean_compact = re.sub(r"[^a-zA-Z0-9]", "", clean_word)
+
+        if clean_word in spaced or clean_compact in compact:
+            return "severe", word
+
+    for word in BAD_WORD_STEMS:
+        clean_word = normalize_bad_text(word)
+        clean_compact = re.sub(r"[^a-zA-Z0-9]", "", clean_word)
+
+        if len(clean_word) <= 3:
+            if clean_word in tokens:
+                return "normal", word
+        else:
+            if clean_word in spaced or clean_compact in compact:
+                return "normal", word
+
+    return None, None
+
+
+def get_profanity_punishment(user_id: int):
+    now = int(time.time())
+    record = profanity_offenses[user_id]
+
+    if record["last"] and now - record["last"] >= PROFANITY_RESET_SECONDS:
+        record["count"] = 0
+
+    record["count"] += 1
+    record["last"] = now
+
+    offense_count = record["count"]
+    punishment_index = min(offense_count - 1, len(PROFANITY_PUNISHMENTS) - 1)
+    duration = PROFANITY_PUNISHMENTS[punishment_index]
+
+    return offense_count, duration
+
+
+async def handle_profanity(message: discord.Message):
+    if not message.guild:
+        return False
+
+    if message.author.bot:
+        return False
+
+    if message.author.guild_permissions.administrator:
+        return False
+
+    if message.author.guild_permissions.manage_messages:
+        return False
+
+    user_id = message.author.id
+    now = time.time()
+
+    if user_id in profanity_punish_cooldowns:
+        if now - profanity_punish_cooldowns[user_id] < 5:
+            return True
+
+    severity, matched_word = contains_filtered_word(message.content)
+
+    if not severity:
+        return False
+
+    profanity_punish_cooldowns[user_id] = now
+
+    try:
+        await message.delete()
+    except Exception:
+        pass
+
+    if severity == "severe":
+        offense_count, _ = get_profanity_punishment(user_id)
+        duration = SEVERE_PROFANITY_TIMEOUT
+
+        try:
+            until = discord.utils.utcnow() + timedelta(seconds=duration)
+
+            await message.author.timeout(
+                until,
+                reason="Rimtas draudžiamas žodis / grasinimas"
+            )
+
+            await message.channel.send(
+                f"🚫 {message.author.mention}, **laikykitės tvarkos**.\n"
+                f"Priežastis: **rimtas draudžiamas žodis / grasinimas**\n"
+                f"Pažeidimas: **{offense_count}**\n"
+                f"Skirtas timeout: **{format_duration(duration)}**",
+                allowed_mentions=discord.AllowedMentions(users=True)
+            )
+
+        except discord.Forbidden:
+            await message.channel.send(
+                f"🚫 {message.author.mention}, **laikykitės tvarkos**.\n"
+                f"Žinutė ištrinta, bet negaliu uždėti timeout.\n"
+                f"Reikia **Moderate Members** teisės ir boto rolė turi būti aukščiau.",
+                allowed_mentions=discord.AllowedMentions(users=True)
+            )
+
+        except Exception as e:
+            await message.channel.send(
+                f"🚫 {message.author.mention}, **laikykitės tvarkos**.\n"
+                f"Nepavyko pritaikyti bausmės: `{e}`",
+                allowed_mentions=discord.AllowedMentions(users=True)
+            )
+
+        return True
+
+    offense_count, duration = get_profanity_punishment(user_id)
+
+    if duration <= 0:
+        await message.channel.send(
+            f"⚠️ {message.author.mention}, **laikykitės tvarkos**.\n"
+            f"Keiksmažodžiai ir įžeidimai serveryje draudžiami.\n"
+            f"Pažeidimas: **{offense_count}**\n"
+            f"Kitas kartas gali baigtis timeout.",
+            allowed_mentions=discord.AllowedMentions(users=True)
+        )
+        return True
+
+    try:
+        until = discord.utils.utcnow() + timedelta(seconds=duration)
+
+        await message.author.timeout(
+            until,
+            reason="Keiksmažodžiai / įžeidimai"
+        )
+
+        await message.channel.send(
+            f"⚠️ {message.author.mention}, **laikykitės tvarkos**.\n"
+            f"Keiksmažodžiai ir įžeidimai serveryje draudžiami.\n"
+            f"Pažeidimas: **{offense_count}**\n"
+            f"Skirtas timeout: **{format_duration(duration)}**",
+            allowed_mentions=discord.AllowedMentions(users=True)
+        )
+
+    except discord.Forbidden:
+        await message.channel.send(
+            f"⚠️ {message.author.mention}, **laikykitės tvarkos**.\n"
+            f"Žinutė ištrinta, bet negaliu uždėti timeout.\n"
+            f"Reikia **Moderate Members** teisės ir boto rolė turi būti aukščiau.",
+            allowed_mentions=discord.AllowedMentions(users=True)
+        )
+
+    except Exception as e:
+        await message.channel.send(
+            f"⚠️ {message.author.mention}, **laikykitės tvarkos**.\n"
+            f"Nepavyko pritaikyti bausmės: `{e}`",
+            allowed_mentions=discord.AllowedMentions(users=True)
+        )
+
+    return True
+
+# ======================
 # AUTO VALORANT UPDATE
 # ======================
 
@@ -707,6 +966,13 @@ async def on_message(message: discord.Message):
     # ======================
 
     if await handle_spam(message):
+        return
+
+    # ======================
+    # KEIKSMAŽODŽIŲ FILTRAS
+    # ======================
+
+    if await handle_profanity(message):
         return
 
     # ======================
@@ -842,7 +1108,7 @@ async def info(ctx):
         "🎭 **Rolės:** parašyk `vyras`, `panele` arba `panelė`\n"
         "💬 **AI pagalba:** veikia kanaluose, kurių pavadinime yra `ai`, arba naudok `!ask klausimas`\n"
         "🧹 **Žinučių trynimas:** `!clear 100`\n\n"
-        "⚠️ Laikykitės tvarkos — spam gali būti ištrintas ir uždėtas timeout.",
+        "⚠️ Laikykitės tvarkos — spam, keiksmažodžiai ir įžeidimai gali būti ištrinti ir uždėtas timeout.",
         mention_author=False
     )
 
