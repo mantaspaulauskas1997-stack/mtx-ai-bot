@@ -129,6 +129,7 @@ BAD_WORD_STEMS = [
 ]
 
 SEVERE_WORD_STEMS = [
+    # savęs žalojimo / labai rimtos frazės
     "nusizudyk",
     "nusižudyk",
     "zudykis",
@@ -137,14 +138,52 @@ SEVERE_WORD_STEMS = [
     "užsimušk",
     "kill yourself",
     "kys",
+
+    # grasinimai
     "papjausiu",
+    "pjausiu",
     "nuzudysiu",
     "nužudysiu",
     "uzmusiu",
     "užmušiu",
+    "uzdauzysiu",
+    "uždaužysiu",
+    "sudauzysiu",
+    "sudaužysiu",
+    "supjausiu",
+    "papjaus",
+    "nuzud",
+    "nužud",
+    "uzmus",
+    "užmus",
 
+    # rasistiniai / diskriminaciniai žodžiai ir apeiti variantai
     "nyg",
-    "nyga"
+    "nyga",
+    "niga",
+    "nigg",
+    "+n+y+g+a",
+    "n.y.g.a",
+    "n-y-g-a",
+
+    # labai toksiški įžeidimai / diskriminacija
+    "negras",
+    "negrai",
+    "ciurka",
+    "čiurka",
+    "zydas",
+    "žydas",
+    "pyderas",
+    "pydaras",
+
+    # pavojingi / ekstremistiniai dalykai
+    "hitler",
+    "nacis",
+    "nazi",
+    "nacistas",
+    "teroristas",
+    "terrorist"
+]
 ]
 ]
 
