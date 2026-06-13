@@ -11,6 +11,12 @@ from collections import defaultdict, deque
 TOKEN = os.getenv("DISCORD_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
+if not TOKEN:
+    raise ValueError("❌ Nerastas DISCORD_TOKEN Railway Variables")
+
+if not OPENAI_API_KEY:
+    raise ValueError("❌ Nerastas OPENAI_API_KEY Railway Variables")
+
 client_ai = OpenAI(api_key=OPENAI_API_KEY)
 
 # ======================
@@ -33,15 +39,35 @@ user_memory = defaultdict(lambda: deque(maxlen=10))
 ai_cooldowns = {}
 role_cooldowns = {}
 
-AI_COOLDOWN = 30      # sekundės
-ROLE_COOLDOWN = 60    # sekundės
+AI_COOLDOWN = 30
+ROLE_COOLDOWN = 60
 
 # ======================
 # 🚀 READY
 # ======================
 @bot.event
 async def on_ready():
-    print(f"{bot.user} online")
+    print(f"✅ {bot.user} online")
+
+    for guild in bot.guilds:
+        vyras_role = discord.utils.get(guild.roles, name="Vyras")
+        panele_role = discord.utils.get(guild.roles, name="Panelė")
+
+        if not vyras_role:
+            await guild.create_role(
+                name="Vyras",
+                colour=discord.Colour.blue(),
+                reason="Auto role sistema"
+            )
+            print(f"✅ Sukurta rolė Vyras serveryje: {guild.name}")
+
+        if not panele_role:
+            await guild.create_role(
+                name="Panelė",
+                colour=discord.Colour.pink(),
+                reason="Auto role sistema"
+            )
+            print(f"✅ Sukurta rolė Panelė serveryje: {guild.name}")
 
 # ======================
 # 💬 MAIN LOGIC
@@ -51,45 +77,58 @@ async def on_message(message):
     if message.author.bot:
         return
 
-    if not hasattr(message.channel, "name"):
+    # Ignoruojam DM
+    if message.guild is None:
         return
 
-    content = message.content.lower()
+    content = message.content.lower().strip()
     now = time.time()
 
     # ======================
-    # 🚫 AUTO-ROLE SYSTEM
+    # 🚻 AUTO-ROLE SYSTEM
     # ======================
     if content in ["vyras", "panelė", "panele"]:
         user_id = message.author.id
 
-        # cooldown check
         if user_id in role_cooldowns:
             if now - role_cooldowns[user_id] < ROLE_COOLDOWN:
                 remaining = int(ROLE_COOLDOWN - (now - role_cooldowns[user_id]))
                 await message.reply(f"⏳ Palauk {remaining}s prieš keičiant rolę.")
                 return
 
-        role_name = "Vyras" if content == "vyras" else "Panelė"
-        role = discord.utils.get(message.guild.roles, name=role_name)
+        vyras_role = discord.utils.get(message.guild.roles, name="Vyras")
+        panele_role = discord.utils.get(message.guild.roles, name="Panelė")
 
-        if role:
-            await message.author.add_roles(role)
-            await message.reply(f"✅ Gavai rolę: {role_name}")
+        if not vyras_role or not panele_role:
+            await message.reply("❌ Rolės nerastos. Perkrauk botą arba sukurk roles rankiniu būdu.")
+            return
+
+        try:
+            if content == "vyras":
+                await message.author.add_roles(vyras_role)
+                await message.author.remove_roles(panele_role)
+                await message.reply("✅ Gavai rolę: Vyras")
+
+            elif content in ["panelė", "panele"]:
+                await message.author.add_roles(panele_role)
+                await message.author.remove_roles(vyras_role)
+                await message.reply("✅ Gavai rolę: Panelė")
+
             role_cooldowns[user_id] = now
-        else:
-            await message.reply("❌ Role nerasta serveryje")
+
+        except discord.Forbidden:
+            await message.reply("❌ Neturiu teisių duoti rolių. Pakelk mano rolę aukščiau.")
+        except Exception as e:
+            await message.reply(f"❌ Klaida duodant rolę: {e}")
 
         return
 
     # ======================
-    # 🤖 AI SYSTEM (AI CHANNEL ONLY)
+    # 🤖 AI SYSTEM
     # ======================
     if "ai" in message.channel.name.lower():
-
         user_id = message.author.id
 
-        # AI cooldown
         if user_id in ai_cooldowns:
             if now - ai_cooldowns[user_id] < AI_COOLDOWN:
                 remaining = int(AI_COOLDOWN - (now - ai_cooldowns[user_id]))
@@ -97,23 +136,20 @@ async def on_message(message):
                 return
 
         try:
-            # 💾 save user message
             user_memory[user_id].append({
                 "role": "user",
                 "content": message.content
             })
 
-            # 🧠 build history
             history = [
                 {
                     "role": "system",
-                    "content": "Tu esi MTX AI Discord botas. Atsimeni pokalbį ir atsakai natūraliai."
+                    "content": "Tu esi MTX AI Discord botas. Atsakyk lietuviškai, draugiškai ir natūraliai."
                 }
             ]
 
             history.extend(list(user_memory[user_id]))
 
-            # 🤖 AI request
             response = client_ai.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=history
@@ -121,18 +157,16 @@ async def on_message(message):
 
             reply = response.choices[0].message.content
 
-            # 💾 save AI response
             user_memory[user_id].append({
                 "role": "assistant",
                 "content": reply
             })
 
             await message.reply(reply[:1900])
-
             ai_cooldowns[user_id] = now
 
         except Exception as e:
-            await message.reply(f"Klaida: {e}")
+            await message.reply(f"❌ AI klaida: {e}")
 
     await bot.process_commands(message)
 
