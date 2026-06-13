@@ -1,18 +1,29 @@
 import os
 import time
+import requests
 import discord
+
 from discord.ext import commands
 from openai import AsyncOpenAI
 from collections import defaultdict, deque
-import requests
+
 # ======================
 # KONFIGŪRACIJA
 # ======================
+
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 VALORANT_API_KEY = os.getenv("VALORANT_API_KEY")
 
 if not DISCORD_TOKEN:
+    raise ValueError("❌ Nerastas DISCORD_TOKEN Railway Variables")
+
+if not OPENAI_API_KEY:
+    raise ValueError("❌ Nerastas OPENAI_API_KEY Railway Variables")
+
+if not VALORANT_API_KEY:
+    raise ValueError("❌ Nerastas VALORANT_API_KEY Railway Variables")
+
 AI_MODEL = "gpt-4o-mini"
 
 AI_COOLDOWN = 30
