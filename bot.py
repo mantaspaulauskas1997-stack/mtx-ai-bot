@@ -1973,7 +1973,7 @@ async def ask_ai(ctx, *, question: str):
             f"❌ AI klaida: {e}",
             mention_author=False
         )
-        mention_author=False
+         mention_author=False
     )
 
 
@@ -1984,161 +1984,18 @@ async def mtx_usage_announcement(ctx):
 
     embed = discord.Embed(
         title="📢 NG COMMUNITY • MTX-AI NAUDOJIMO INFORMACIJA",
-        description=(
-            "Sveiki visi! 💙\n\n"
-            "Norime oficialiai pranešti apie **MTX-AI** naudojimą **NG Community** serveryje.\n\n"
-            "**MTX-AI** yra oficialus NG Community botas, sukurtas serverio savininko **MTX**. "
-            "Tai nauja pagalbos, role, Valorant rank ir moderacijos sistema, kuri padės serveriui "
-            "veikti tvarkingiau, saugiau ir moderniau."
-        ),
+        description="MTX-AI informacija apie serverio naudojimą.",
         color=discord.Color.from_rgb(88, 101, 242)
     )
 
     embed.add_field(
         name="🤖 Kas yra MTX-AI?",
         value=(
-            "**MTX-AI** yra serverio pagalbininkas ir automatinė sistema.\n\n"
-            "Jis padeda nariams greičiau gauti roles, informaciją ir pagalbą, "
-            "o administracijai sumažina rankinį darbą."
+            "MTX-AI yra oficialus NG Community botas, sukurtas serverio savininko MTX.\n"
+            "Jis padeda su rolėmis, Valorant rankais, MMR, AI pagalba ir serverio apsauga."
         ),
         inline=False
     )
-
-    embed.add_field(
-        name="🧠 Ką gali MTX-AI?",
-        value=(
-            "• Valorant rank rolės\n"
-            "• MMR paaiškinimai\n"
-            "• Žaidimų rolės\n"
-            "• Lyties rolės\n"
-            "• AI pagalba kanale **ᴀɪ-ᴄʜᴀᴛ**\n"
-            "• Serverio klausimai\n"
-            "• Automatinė tvarkos priežiūra\n"
-            "• Anti-spam ir keiksmažodžių filtras"
-        ),
-        inline=False
-    )
-
-    embed.add_field(
-        name="🎁 MTX-AI naudojimo naudos",
-        value=(
-            "Tam tikros **MTX-AI funkcijos**, specialios rolės ar papildomos naudos bus skirtos "
-            "nariams, kurie prisideda prie **NG Community** augimo.\n\n"
-            "Naudas galės gauti tie, kurie:\n"
-            "🚀 boostina serverį\n"
-            "💙 paremia serverį\n"
-            "🏆 dalyvauja arba laimi turnyruose\n"
-            "🌟 aktyviai prisideda prie bendruomenės\n"
-            "🛠️ padeda su idėjomis ar serverio tobulinimu"
-        ),
-        inline=False
-    )
-
-    embed.add_field(
-        name="⏳ Aktyvumo laikotarpis",
-        value=(
-            f"MTX-AI specialių naudų / prioritetinio naudojimo laikotarpis aktyvus: **<t:{ends_at}:R>**\n"
-            f"🕒 Tikslus pabaigos laikas: **<t:{ends_at}:F>**"
-        ),
-        inline=False
-    )
-
-    embed.add_field(
-        name="📜 Taisyklių patvirtinimas",
-        value=(
-            "Nauji nariai turi:\n"
-            "1️⃣ perskaityti taisykles\n"
-            "2️⃣ palaukti bent 1 minutę\n"
-            "3️⃣ kanale **✅・patvirtinimas** parašyti:\n\n"
-            "`sutinku`"
-        ),
-        inline=False
-    )
-
-    embed.add_field(
-        name="🎮 Žaidimų rolės",
-        value=(
-            "Norint gauti žaidimo rolę, parašyk:\n\n"
-            "`valorant`\n"
-            "`cs2`\n"
-            "`roblox`\n"
-            "`minecraft`"
-        ),
-        inline=True
-    )
-
-    embed.add_field(
-        name="🏆 Valorant rank rolė",
-        value=(
-            "Norint gauti Valorant rank rolę, parašyk:\n\n"
-            "`verify Vardas#TAG`\n\n"
-            "Pvz:\n"
-            "`verify Jonas#EUW`"
-        ),
-        inline=True
-    )
-
-    embed.add_field(
-        name="📊 MMR info",
-        value=(
-            "Jeigu nori sužinoti apie Valorant MMR, parašyk:\n\n"
-            "`mmr`"
-        ),
-        inline=True
-    )
-
-    embed.add_field(
-        name="🎭 Lyties rolės",
-        value=(
-            "Lyties rolę gali gauti parašęs:\n\n"
-            "`vyras`\n"
-            "`panele`\n"
-            "`panelė`"
-        ),
-        inline=True
-    )
-
-    embed.add_field(
-        name="💬 AI pagalba",
-        value=(
-            "MTX-AI rasi kanale:\n\n"
-            "**ᴀɪ-ᴄʜᴀᴛ**\n\n"
-            "Ten gali klausti apie Valorant, MMR, FPS, crosshair, roles ar serverio pagalbą."
-        ),
-        inline=True
-    )
-
-    embed.add_field(
-        name="🚫 Ko MTX-AI nedaro?",
-        value=(
-            "MTX-AI nepadeda su:\n\n"
-            "• seksualiniu turiniu\n"
-            "• smurtu\n"
-            "• žiauriais dalykais\n"
-            "• cheat / hack\n"
-            "• phishing / scam\n"
-            "• pavojinga ar nelegalia veikla"
-        ),
-        inline=False
-    )
-
-    embed.add_field(
-        name="💙 Pabaigai",
-        value=(
-            "Ačiū visiems, kurie palaiko **NG Community**.\n"
-            "Kuo daugiau prisidėsime, tuo daugiau galėsime sukurti visai bendruomenei.\n\n"
-            "**NG Community juda į priekį! 🚀**"
-        ),
-        inline=False
-    )
-
-    embed.set_footer(
-        text=f"Paskelbė {ctx.author.display_name} • NG Community",
-        icon_url=ctx.author.display_avatar.url
-    )
-
-    if ctx.guild and ctx.guild.icon:
-        embed.set_thumbnail(url=ctx.guild.icon.url)
 
     await ctx.send(embed=embed)
 
@@ -2146,60 +2003,6 @@ async def mtx_usage_announcement(ctx):
 # ======================
 # KOMANDŲ KLAIDOS
 # ======================
-# ======================
-# KOMANDŲ KLAIDOS
-# ======================
-
-@bot.event
-async def on_command_error(ctx, error):
-    if isinstance(error, commands.MissingPermissions):
-        await ctx.reply(
-            "❌ Tu neturi reikalingų teisių šiai komandai.",
-            mention_author=False
-        )
-
-    elif isinstance(error, commands.BotMissingPermissions):
-        await ctx.reply(
-            "❌ Botui trūksta teisių.",
-            mention_author=False
-        )
-
-    elif isinstance(error, commands.MissingRequiredArgument):
-        if ctx.command and ctx.command.name == "verify":
-            await ctx.reply(
-                "❌ Naudok taip: `!verify Vardas#TAG` arba `verify Vardas#TAG`",
-                mention_author=False
-            )
-        elif ctx.command and ctx.command.name == "clear":
-            await ctx.reply(
-                "❌ Naudok taip: `!clear 100`",
-                mention_author=False
-            )
-        elif ctx.command and ctx.command.name == "ask":
-            await ctx.reply(
-                "❌ Naudok taip: `!ask tavo klausimas`",
-                mention_author=False
-            )
-        else:
-            await ctx.reply(
-                "❌ Trūksta argumento komandai.",
-                mention_author=False
-            )
-
-    elif isinstance(error, commands.BadArgument):
-        await ctx.reply(
-            "❌ Blogas formatas.",
-            mention_author=False
-        )
-
-    elif isinstance(error, commands.CommandNotFound):
-        return
-
-    else:
-        await ctx.reply(
-            f"❌ Komandos klaida: {error}",
-            mention_author=False
-        )
 
 # ======================
 # PALEIDIMAS
