@@ -34,7 +34,7 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 user_memory = defaultdict(lambda: deque(maxlen=10))
 
 # ======================
-# 🚫 COOLDOWNS
+# ⏳ COOLDOWNS
 # ======================
 ai_cooldowns = {}
 role_cooldowns = {}
@@ -49,26 +49,6 @@ ROLE_COOLDOWN = 60
 async def on_ready():
     print(f"✅ {bot.user} online")
 
-    for guild in bot.guilds:
-        vyras_role = discord.utils.get(guild.roles, name="Vyras")
-        panele_role = discord.utils.get(guild.roles, name="Panelė")
-
-        if not vyras_role:
-            await guild.create_role(
-                name="Vyras",
-                colour=discord.Colour.blue(),
-                reason="Auto role sistema"
-            )
-            print(f"✅ Sukurta rolė Vyras serveryje: {guild.name}")
-
-        if not panele_role:
-            await guild.create_role(
-                name="Panelė",
-                colour=discord.Colour.pink(),
-                reason="Auto role sistema"
-            )
-            print(f"✅ Sukurta rolė Panelė serveryje: {guild.name}")
-
 # ======================
 # 💬 MAIN LOGIC
 # ======================
@@ -77,7 +57,7 @@ async def on_message(message):
     if message.author.bot:
         return
 
-    # Ignoruojam DM
+    # Ignoruojam DM žinutes
     if message.guild is None:
         return
 
@@ -85,7 +65,7 @@ async def on_message(message):
     now = time.time()
 
     # ======================
-    # 🚻 AUTO-ROLE SYSTEM
+    # 🚻 VYRAS / PANELĖ ROLE
     # ======================
     if content in ["vyras", "panelė", "panele"]:
         user_id = message.author.id
@@ -99,32 +79,36 @@ async def on_message(message):
         vyras_role = discord.utils.get(message.guild.roles, name="Vyras")
         panele_role = discord.utils.get(message.guild.roles, name="Panelė")
 
-        if not vyras_role or not panele_role:
-            await message.reply("❌ Rolės nerastos. Perkrauk botą arba sukurk roles rankiniu būdu.")
+        if not vyras_role:
+            await message.reply("❌ Nerasta rolė **Vyras**. Sukurk ją Discord serveryje.")
+            return
+
+        if not panele_role:
+            await message.reply("❌ Nerasta rolė **Panelė**. Sukurk ją Discord serveryje.")
             return
 
         try:
             if content == "vyras":
                 await message.author.add_roles(vyras_role)
                 await message.author.remove_roles(panele_role)
-                await message.reply("✅ Gavai rolę: Vyras")
+                await message.reply("✅ Gavai rolę: **Vyras**")
 
             elif content in ["panelė", "panele"]:
                 await message.author.add_roles(panele_role)
                 await message.author.remove_roles(vyras_role)
-                await message.reply("✅ Gavai rolę: Panelė")
+                await message.reply("✅ Gavai rolę: **Panelė**")
 
             role_cooldowns[user_id] = now
 
         except discord.Forbidden:
-            await message.reply("❌ Neturiu teisių duoti rolių. Pakelk mano rolę aukščiau.")
+            await message.reply("❌ Negaliu duoti rolės. Pakelk mano boto rolę aukščiau už **Vyras** ir **Panelė**.")
         except Exception as e:
             await message.reply(f"❌ Klaida duodant rolę: {e}")
 
         return
 
     # ======================
-    # 🤖 AI SYSTEM
+    # 🤖 AI SISTEMA
     # ======================
     if "ai" in message.channel.name.lower():
         user_id = message.author.id
