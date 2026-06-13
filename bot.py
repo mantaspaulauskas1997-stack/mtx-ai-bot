@@ -141,7 +141,11 @@ SEVERE_WORD_STEMS = [
     "nuzudysiu",
     "nužudysiu",
     "uzmusiu",
-    "užmušiu"
+    "užmušiu",
+
+    "nyg",
+    "nyga"
+]
 ]
 
 # ======================
