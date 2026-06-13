@@ -21,8 +21,7 @@ if not DISCORD_TOKEN:
 if not OPENAI_API_KEY:
     raise ValueError("❌ Nerastas OPENAI_API_KEY Railway Variables")
 
-if not VALORANT_API_KEY:
-    raise ValueError("❌ Nerastas VALORANT_API_KEY Railway Variables")
+
 
 AI_MODEL = "gpt-4o-mini"
 
