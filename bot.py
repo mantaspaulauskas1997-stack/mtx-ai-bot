@@ -1973,8 +1973,6 @@ async def ask_ai(ctx, *, question: str):
             f"❌ AI klaida: {e}",
             mention_author=False
         )
-         mention_author=False
-    )
 
 
 @bot.command(name="mtxnaudojimas", aliases=["mtxinfo", "mtxai"])
@@ -1982,23 +1980,237 @@ async def ask_ai(ctx, *, question: str):
 async def mtx_usage_announcement(ctx):
     ends_at = int(time.time()) + 24 * 60 * 60
 
-    embed = discord.Embed(
+    embed1 = discord.Embed(
         title="📢 NG COMMUNITY • MTX-AI NAUDOJIMO INFORMACIJA",
-        description="MTX-AI informacija apie serverio naudojimą.",
+        description=(
+            "Sveiki visi! 💙\n\n"
+            "Norime oficialiai pranešti apie **MTX-AI** naudojimą **NG Community** serveryje.\n\n"
+            "**MTX-AI** yra oficialus NG Community botas, sukurtas serverio savininko **MTX**. "
+            "Tai nauja pagalbos, role, Valorant rank ir moderacijos sistema, kuri padės serveriui "
+            "veikti tvarkingiau, saugiau ir moderniau."
+        ),
         color=discord.Color.from_rgb(88, 101, 242)
     )
 
-    embed.add_field(
-        name="🤖 Kas yra MTX-AI?",
+    if ctx.guild and ctx.guild.icon:
+        embed1.set_thumbnail(url=ctx.guild.icon.url)
+
+    embed1.add_field(
+        name="👑 Apie savininką",
         value=(
-            "MTX-AI yra oficialus NG Community botas, sukurtas serverio savininko MTX.\n"
-            "Jis padeda su rolėmis, Valorant rankais, MMR, AI pagalba ir serverio apsauga."
+            "Aš esu **MTX** — **NG Community** serverio savininkas.\n\n"
+            "Šį serverį kuriu tam, kad žmonės turėtų vietą, kur gali bendrauti, žaisti, "
+            "susirasti komandą, dalyvauti veiklose ir būti saugioje bendruomenėje.\n\n"
+            "**MTX-AI** yra mano oficialus botas ir viena iš pagrindinių serverio sistemų."
         ),
         inline=False
     )
 
-    await ctx.send(embed=embed)
+    embed1.add_field(
+        name="🤖 Kas yra MTX-AI?",
+        value=(
+            "**MTX-AI** yra oficialus **NG Community** pagalbininkas.\n\n"
+            "Tai automatinė pagalbos, role ir moderacijos sistema, kuri padeda nariams greičiau "
+            "gauti informaciją, roles ir pagalbą, o administracijai sumažina rankinį darbą."
+        ),
+        inline=False
+    )
 
+    embed1.add_field(
+        name="🧠 Ką gali MTX-AI?",
+        value=(
+            "• Padėti su **Valorant rank rolėmis**\n"
+            "• Paaiškinti **MMR / RR / rank sistemą**\n"
+            "• Duoti **žaidimų roles**\n"
+            "• Duoti **lyties roles**\n"
+            "• Atsakyti į klausimus kanale **ᴀɪ-ᴄʜᴀᴛ**\n"
+            "• Padėti su **FPS, crosshair, sensitivity, agentais**\n"
+            "• Padėti su serverio klausimais\n"
+            "• Prižiūrėti tvarką automatiškai\n"
+            "• Trinti spamą ir įžeidimus\n"
+            "• Taikyti timeout už pažeidimus"
+        ),
+        inline=False
+    )
+
+    embed1.add_field(
+        name="🎁 MTX-AI naudojimo naudos",
+        value=(
+            "Tam tikros **MTX-AI funkcijos**, specialios rolės ar papildomos naudos bus skirtos "
+            "nariams, kurie prisideda prie **NG Community** augimo.\n\n"
+            "Naudas galės gauti tie, kurie:\n"
+            "🚀 **boostina serverį**\n"
+            "💙 **paremia serverį**\n"
+            "🏆 **dalyvauja arba laimi turnyruose**\n"
+            "🌟 **aktyviai prisideda prie bendruomenės**\n"
+            "🛠️ **padeda su idėjomis ar serverio tobulinimu**\n\n"
+            "Tai padeda kurti aktyvią, sąžiningą ir motyvuotą bendruomenę."
+        ),
+        inline=False
+    )
+
+    embed1.add_field(
+        name="⏳ 24 val. aktyvumo laikotarpis",
+        value=(
+            f"Specialių naudų / prioritetinio MTX-AI naudojimo laikotarpis aktyvus: **<t:{ends_at}:R>**\n"
+            f"🕒 Tikslus pabaigos laikas: **<t:{ends_at}:F>**\n\n"
+            "Per šį laiką galite sužinoti daugiau, prisidėti prie serverio ir pasiruošti būsimoms naudoms."
+        ),
+        inline=False
+    )
+
+    embed2 = discord.Embed(
+        title="📌 Kaip naudotis MTX-AI?",
+        description=(
+            "Žemiau pateikta visa pagrindinė informacija, kaip naudotis serverio sistemomis."
+        ),
+        color=discord.Color.from_rgb(88, 101, 242)
+    )
+
+    if ctx.guild and ctx.guild.icon:
+        embed2.set_thumbnail(url=ctx.guild.icon.url)
+
+    embed2.add_field(
+        name="📜 Kaip patekti į serverį?",
+        value=(
+            "Nauji nariai turi atlikti šiuos žingsnius:\n\n"
+            "1️⃣ Nueiti į kanalą **📜・taisykles**\n"
+            "2️⃣ Perskaityti taisykles\n"
+            "3️⃣ Palaukti bent **1 minutę**\n"
+            "4️⃣ Nueiti į kanalą **✅・patvirtinimas**\n"
+            "5️⃣ Parašyti:\n"
+            "`sutinku`\n\n"
+            "Tada narys gauna **Narys** rolę ir gali naudotis serveriu."
+        ),
+        inline=False
+    )
+
+    embed2.add_field(
+        name="🎮 Žaidimų rolės",
+        value=(
+            "Po taisyklių patvirtinimo gali pasirinkti žaidimų roles parašydamas:\n\n"
+            "`valorant` — Valorant rolė\n"
+            "`cs2` — CS2 rolė\n"
+            "`roblox` — Roblox rolė\n"
+            "`minecraft` — Minecraft rolė\n\n"
+            "Nusiimti rolę gali su:\n"
+            "`remove valorant`, `remove cs2`, `remove roblox`, `remove minecraft`"
+        ),
+        inline=False
+    )
+
+    embed2.add_field(
+        name="🏆 Valorant rank rolė",
+        value=(
+            "Jeigu nori gauti savo Valorant rank rolę, parašyk:\n\n"
+            "`verify Vardas#TAG`\n\n"
+            "Pavyzdys:\n"
+            "`verify Jonas#EUW`\n\n"
+            "MTX-AI patikrins tavo Valorant ranką ir uždės atitinkamą Discord rolę:\n"
+            "**Iron, Bronze, Silver, Gold, Platinum, Diamond, Ascendant, Immortal arba Radiant**.\n\n"
+            "Rank verify galima naudoti kas **4 val.**\n"
+            "Rankai automatiškai atnaujinami kas **12 val.**"
+        ),
+        inline=False
+    )
+
+    embed2.add_field(
+        name="📊 MMR informacija",
+        value=(
+            "Jeigu nori sužinoti, kas yra Valorant MMR, parašyk:\n\n"
+            "`mmr`\n\n"
+            "MTX-AI paaiškins, kas yra **Matchmaking Rating**, kaip jis veikia ir kaip jį galima pagerinti."
+        ),
+        inline=False
+    )
+
+    embed2.add_field(
+        name="🎭 Lyties rolės",
+        value=(
+            "Jeigu nori pasirinkti lyties rolę, parašyk:\n\n"
+            "`vyras` — gauti **Vyras** rolę\n"
+            "`panele` arba `panelė` — gauti **Panelė** rolę"
+        ),
+        inline=False
+    )
+
+    embed2.add_field(
+        name="💬 AI pagalba",
+        value=(
+            "MTX-AI gali atsakyti į klausimus specialiame kanale:\n\n"
+            "**ᴀɪ-ᴄʜᴀᴛ**\n\n"
+            "Ten gali klausti apie Valorant, MMR, FPS, crosshair, roles, taisykles ar serverio naudojimą.\n\n"
+            "Taip pat gali naudoti:\n"
+            "`!ask tavo klausimas`"
+        ),
+        inline=False
+    )
+
+    embed2.add_field(
+        name="🛡️ Serverio apsauga",
+        value=(
+            "Serveryje veikia automatinė apsauga:\n\n"
+            "• anti-spam sistema\n"
+            "• keiksmažodžių filtras\n"
+            "• įžeidimų filtras\n"
+            "• automatinis žinučių trynimas\n"
+            "• timeout sistema\n"
+            "• taisyklių patvirtinimo sistema\n\n"
+            "Jeigu narys spamina, įžeidinėja ar pažeidžia taisykles, MTX-AI gali automatiškai reaguoti."
+        ),
+        inline=False
+    )
+
+    embed2.add_field(
+        name="🚫 Ko MTX-AI nedaro?",
+        value=(
+            "MTX-AI nepadeda su:\n\n"
+            "• seksualiniu turiniu\n"
+            "• smurtu ar žiauriais dalykais\n"
+            "• grasinimais\n"
+            "• cheat / hack\n"
+            "• Vanguard bypass\n"
+            "• phishing / scam\n"
+            "• kenkėjiška ar nelegalia veikla\n\n"
+            "Tokie prašymai gali būti ignoruojami arba perduoti administracijai."
+        ),
+        inline=False
+    )
+
+    embed2.add_field(
+        name="📌 Naudingos komandos",
+        value=(
+            "`valorant` — gauti Valorant žaidimo rolę\n"
+            "`cs2` — gauti CS2 rolę\n"
+            "`roblox` — gauti Roblox rolę\n"
+            "`minecraft` — gauti Minecraft rolę\n\n"
+            "`verify Vardas#TAG` — gauti Valorant rank rolę\n"
+            "`mmr` — sužinoti apie Valorant MMR\n\n"
+            "`vyras` — gauti Vyras rolę\n"
+            "`panele` — gauti Panelė rolę\n\n"
+            "`!ask klausimas` — paklausti MTX-AI\n"
+            "`!info` — boto informacija"
+        ),
+        inline=False
+    )
+
+    embed2.add_field(
+        name="💙 Pabaigai",
+        value=(
+            "NG Community serveris yra aktyvus ir toliau bus tobulinamas.\n\n"
+            "MTX-AI sukurtas tam, kad viskas būtų paprasčiau nariams, administracijai ir visai bendruomenei.\n\n"
+            "Ačiū visiems, kurie palaiko **NG Community**, prisideda prie serverio augimo ir padeda kurti geresnę bendruomenę.\n\n"
+            "**NG Community juda į priekį! 🚀**"
+        ),
+        inline=False
+    )
+
+    embed2.set_footer(
+        text=f"Paskelbė {ctx.author.display_name} • NG Community",
+        icon_url=ctx.author.display_avatar.url
+    )
+
+    await ctx.send(embeds=[embed1, embed2])
 
 # ======================
 # KOMANDŲ KLAIDOS
