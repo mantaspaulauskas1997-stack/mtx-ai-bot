@@ -125,7 +125,15 @@ BAD_WORD_STEMS = [
     "daun",
     "pyder",
     "pydar",
-    "pidar"
+    "pidar",
+
+    # tavo papildomi žodžiai
+    "niuh",
+    "niuhas",
+    "mantel",
+    "mantelis",
+    "gryb",
+    "grybas"
 ]
 
 SEVERE_WORD_STEMS = [
@@ -157,7 +165,7 @@ SEVERE_WORD_STEMS = [
     "uzmus",
     "užmus",
 
-    # rasistiniai / diskriminaciniai žodžiai ir apeiti variantai
+    # rasistiniai / diskriminaciniai variantai
     "nyg",
     "nyga",
     "niga",
@@ -166,25 +174,19 @@ SEVERE_WORD_STEMS = [
     "n.y.g.a",
     "n-y-g-a",
 
-    # labai toksiški įžeidimai / diskriminacija
-    "negras",
-    "negrai",
+    # labai toksiški / diskriminaciniai žodžiai
     "ciurka",
     "čiurka",
     "zydas",
     "žydas",
-    "pyderas",
-    "pydaras",
 
-    # pavojingi / ekstremistiniai dalykai
+    # ekstremistiniai žodžiai
     "hitler",
     "nacis",
     "nazi",
     "nacistas",
     "teroristas",
     "terrorist"
-]
-]
 ]
 
 # ======================
