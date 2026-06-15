@@ -398,7 +398,7 @@ def discord_relative_time(timestamp: int):
 def format_duration(seconds: int):
     if seconds >= 3600:
         return f"{seconds // 3600} val."
-    if seconds >= 60:
+    d(if seconds >= 60:
         return f"{seconds // 60} min."
     return f"{seconds} sek."
 
@@ -597,307 +597,207 @@ async def send_welcome_message(member: discord.Member):
         inline=False
     )
 
-    embed.add_field(
-        name="📜 Pirmas žingsnis — taisyklės",
-        value=(
-            "Kad galėtum naudotis visu serveriu:\n\n"
-            "1️⃣ Pirmiausia nueik į kanalą **📜・taisykles**.\n"
-            "2️⃣ Ramiai perskaityk taisykles.\n"
-            "3️⃣ Palauk bent **1 minutę**.\n"
-            "4️⃣ Tada kanale **✅・patvirtinimas** parašyk:\n"
-            "`sutinku`\n\n"
-            "Tada gausi **Narys** rolę ir galėsi naudotis serveriu."
-        ),
-        inline=False
+    embed.add_fiel
+        nif seconds >= 60:
+        return f"{seconds // 60} min."
+    return f"{seconds} sek."
+
+
+def get_base_valorant_rank(full_rank: str):
+    if not full_rank:
+        return None
+
+    return full_rank.split(" ")[0]
+
+
+def find_channel_by_names(guild: discord.Guild, names: list, keywords: list):
+    for name in names:
+        channel = discord.utils.get(guild.text_channels, name=name)
+        if channel:
+            return channel
+
+    for channel in guild.text_channels:
+        channel_name = channel.name.lower()
+        if any(keyword in channel_name for keyword in keywords):
+            return channel
+
+    return None
+
+
+def find_welcome_channel(guild: discord.Guild):
+    return find_channel_by_names(
+        guild,
+        WELCOME_CHANNEL_NAMES,
+        ["welcome", "sveiki", "prisijung", "atvyk", "ᴡᴇʟᴄᴏᴍᴇ"]
     )
 
-    embed.add_field(
-        name="🎮 Žaidimų rolės",
-        value=(
-            "Kai patvirtinsi taisykles, galėsi pasirinkti žaidimų roles parašydamas:\n\n"
-            "`valorant` — Valorant rolė\n"
-            "`cs2` — CS2 rolė\n"
-            "`roblox` — Roblox rolė\n"
-            "`minecraft` — Minecraft rolė\n\n"
-            "Jeigu norėsi nusiimti rolę:\n"
-            "`remove valorant`, `remove cs2`, `remove roblox`, `remove minecraft`"
-        ),
-        inline=False
+
+def find_rules_channel(guild: discord.Guild):
+    return find_channel_by_names(
+        guild,
+        RULES_CHANNEL_NAMES,
+        ["taisykles", "rules", "ᴛᴀɪsʏᴋʟᴇs"]
     )
 
-    embed.add_field(
-        name="🏆 Valorant rank rolė",
-        value=(
-            "Jeigu nori gauti savo Valorant rank rolę, parašyk:\n\n"
-            "`verify Vardas#TAG`\n\n"
-            "Pavyzdys:\n"
-            "`verify Jonas#EUW`\n\n"
-            "Botas patikrins tavo ranką ir uždės rolę, pvz. **Gold**, **Platinum**, **Diamond** ir t.t.\n"
-            "Rank verify galima naudoti kas **4 val.**"
-        ),
-        inline=False
+
+def find_rules_accept_channel(guild: discord.Guild):
+    return find_channel_by_names(
+        guild,
+        RULES_ACCEPT_CHANNEL_NAMES,
+        ["patvirtinimas", "accept", "ᴘᴀᴛᴠɪʀᴛɪɴɪᴍᴀs"]
     )
 
-    embed.add_field(
-        name="🎭 Lyties rolės",
-        value=(
-            "Pasirinkti lyties rolę gali paprastai parašydamas:\n\n"
-            "`vyras` — gauti **Vyras** rolę\n"
-            "`panele` arba `panelė` — gauti **Panelė** rolę"
-        ),
-        inline=False
-    )
 
-    embed.add_field(
-        name="🎁 Specialios naudos",
-        value=(
-            "Papildomos naudos, specialios rolės ar išskirtiniai privalumai gali būti suteikiami nariams, kurie:\n\n"
-            "🚀 boostina serverį;\n"
-            "💙 paremia bendruomenę;\n"
-            "🏆 dalyvauja arba laimi turnyruose;\n"
-            "🌟 prisideda prie NG Community augimo.\n\n"
-            "Tai padeda palaikyti aktyvią, sąžiningą ir motyvuotą bendruomenę."
-        ),
-        inline=False
-    )
-
-    embed.add_field(
-        name="🛡️ ɴɢ ᴄᴏᴍᴍᴜɴɪᴛʏ ᴛᴠᴀʀᴋᴀ",
-        value=(
-            "⚠️ **Taisyklės šiame serveryje yra griežtos**, nes norime saugios, draugiškos ir tvarkingos bendruomenės.\n\n"
-            "🤝 **Gerbk kitus narius** — bendrauk draugiškai ir kultūringai.\n"
-            "🚫 **Nespamink** — flood, caps spam ir pasikartojančios žinutės bus trinamos.\n"
-            "💬 **Neįžeidinėk** — jokio toxic elgesio, provokacijų ar patyčių.\n"
-            "📢 **Nereklamuok be leidimo** — invite linkai ir reklamos draudžiamos.\n"
-            "🛡️ **Jokių cheat / hack** — kenksminga veikla, phishing ar bypass metodai draudžiami.\n\n"
-            "🤖 **MTX-AI apsauga aktyvi**\n"
-            "Serveris automatiškai saugomas nuo spamo, įžeidimų ir taisyklių pažeidimų.\n\n"
-            "💙 Laikykis taisyklių, gerbk kitus ir mėgaukis NG Community!"
-        ),
-        inline=False
-    )
-
-    embed.set_footer(
-        text=f"Tu esi #{member_count} narys • NG Community linki gero laiko 💙",
-        icon_url=logo_url if logo_url else None
-    )
-
-    try:
-        await channel.send(
-            content=f"🌟 Sveikas atvykęs, {member.mention}! Smagu tave matyti čia 💙",
-            embed=embed,
-            allowed_mentions=discord.AllowedMentions(users=True)
-        )
-    except Exception as e:
-        print(f"❌ Nepavyko išsiųsti welcome žinutės: {e}")
+def has_role(member: discord.Member, role_name: str):
+    role = discord.utils.get(member.guild.roles, name=role_name)
+    return role in member.roles if role else False
 
 
-async def handle_rules_accept(message: discord.Message):
-    content = message.content.lower().strip()
+def has_verified_role(member: discord.Member):
+    if member.guild_permissions.administrator or member.guild_permissions.manage_messages:
+        return True
+
+    return has_role(member, VERIFIED_ROLE_NAME)
+
+
+async def give_role(member: discord.Member, role_name: str, reason: str = None):
+    role = discord.utils.get(member.guild.roles, name=role_name)
+
+    if not role:
+        print(f"❌ Nerasta rolė: {role_name}")
+        return False
+
+    bot_member = member.guild.get_member(bot.user.id)
+
+    if not bot_member:
+        return False
+
+    if bot_member.top_role <= role:
+        print(f"❌ Boto rolė per žemai rolei: {role.name}")
+        return False
+
+    if role not in member.roles:
+        await member.add_roles(role, reason=reason or "Role add")
+
+    return True
+
+
+async def remove_role(member: discord.Member, role_name: str, reason: str = None):
+    role = discord.utils.get(member.guild.roles, name=role_name)
+
+    if not role:
+        return False
+
+    bot_member = member.guild.get_member(bot.user.id)
+
+    if not bot_member:
+        return False
+
+    if bot_member.top_role <= role:
+        print(f"❌ Boto rolė per žemai rolei: {role.name}")
+        return False
+
+    if role in member.roles:
+        await member.remove_roles(role, reason=reason or "Role remove")
+
+    return True
+
+
+async def require_verified(message: discord.Message):
+    if has_verified_role(message.author):
+        return True
 
     accept_channel = find_rules_accept_channel(message.guild)
     rules_channel = find_rules_channel(message.guild)
 
-    if accept_channel and message.channel.id == accept_channel.id:
-        if content not in RULES_ACCEPT_WORDS:
-            try:
-                await message.delete(delay=ACCEPT_DELETE_AFTER_SECONDS)
-            except Exception:
-                pass
-
-            warn_msg = await message.channel.send(
-                f"📜 {message.author.mention}, šiame kanale reikia parašyti tik `sutinku`.",
-                allowed_mentions=discord.AllowedMentions(users=True)
-            )
-
-            try:
-                await warn_msg.delete(delay=ACCEPT_DELETE_AFTER_SECONDS)
-            except Exception:
-                pass
-
-            return True
-
-    if content not in RULES_ACCEPT_WORDS:
-        return False
-
-    if accept_channel and message.channel.id != accept_channel.id:
-        reply = await message.reply(
-            f"📜 Taisykles reikia patvirtinti kanale {accept_channel.mention} parašant `sutinku`.",
-            mention_author=False
+    if accept_channel:
+        await safe_reply(
+            message,
+            f"📜 Pirma perskaityk taisykles ir kanale {accept_channel.mention} parašyk `sutinku`."
+        )
+    elif rules_channel:
+        await safe_reply(
+            message,
+            f"📜 Pirma perskaityk taisykles kanale {rules_channel.mention} ir parašyk `sutinku`."
+        )
+    else:
+        await safe_reply(
+            message,
+            "📜 Pirma turi perskaityti taisykles ir parašyti `sutinku`."
         )
 
-        try:
-            await reply.delete(delay=ACCEPT_DELETE_AFTER_SECONDS)
-        except Exception:
-            pass
+    return False
 
-        return True
 
-    remaining_wait = get_rules_wait_remaining(message.author)
+def get_rules_wait_remaining(member: discord.Member):
+    if not member.joined_at:
+        return 0
 
-    if remaining_wait > 0:
-        reply = await message.reply(
-            f"⏳ Pirma ramiai perskaityk taisykles.\n"
-            f"Patvirtinti galėsi po **{remaining_wait} sek.**\n\n"
-            f"📜 Taisyklės: {rules_channel.mention if rules_channel else '`taisykles` kanale'}",
-            mention_author=False
-        )
+    joined_timestamp = int(member.joined_at.timestamp())
+    now = int(time.time())
 
-        try:
-            await message.delete(delay=ACCEPT_DELETE_AFTER_SECONDS)
-            await reply.delete(delay=ACCEPT_DELETE_AFTER_SECONDS)
-        except Exception:
-            pass
-
-        return True
-
-    if has_verified_role(message.author):
-        reply = await message.reply(
-            "✅ Tu jau esi patvirtintas.",
-            mention_author=False
-        )
-
-        try:
-            await message.delete(delay=ACCEPT_DELETE_AFTER_SECONDS)
-            await reply.delete(delay=ACCEPT_DELETE_AFTER_SECONDS)
-        except Exception:
-            pass
-
-        return True
-
-    try:
-        gave_verified = await give_role(
-            message.author,
-            VERIFIED_ROLE_NAME,
-            reason="Taisyklių patvirtinimas"
-        )
-
-        await remove_role(
-            message.author,
-            UNVERIFIED_ROLE_NAME,
-            reason="Taisyklių patvirtinimas"
-        )
-
-        if not gave_verified:
-            reply = await message.reply(
-                f"❌ Nepavyko duoti rolės **{VERIFIED_ROLE_NAME}**. Patikrink roles ir boto poziciją.",
-                mention_author=False
-            )
-
-            try:
-                await message.delete(delay=ACCEPT_DELETE_AFTER_SECONDS)
-                await reply.delete(delay=ACCEPT_DELETE_AFTER_SECONDS)
-            except Exception:
-                pass
-
-            return True
-
-        reply = await message.reply(
-            "✅ **Taisyklės patvirtintos!**\n\n"
-            "Dabar gali naudotis serveriu.\n\n"
-            "🎮 Žaidimų rolės: `valorant`, `cs2`, `roblox`, `minecraft`\n"
-            "🎭 Lyties rolės: `vyras`, `panele`\n"
-            "🏆 Valorant rank rolė: `verify Vardas#TAG`\n"
-            "📊 MMR info: `mmr`",
-            mention_author=False
-        )
-
-        try:
-            await message.delete(delay=ACCEPT_DELETE_AFTER_SECONDS)
-            await reply.delete(delay=ACCEPT_DELETE_AFTER_SECONDS)
-        except Exception:
-            pass
-
-    except discord.Forbidden:
-        reply = await message.reply(
-            "❌ Negaliu duoti rolės. Reikia **Manage Roles** ir boto rolė turi būti aukščiau.",
-            mention_author=False
-        )
-
-        try:
-            await message.delete(delay=ACCEPT_DELETE_AFTER_SECONDS)
-            await reply.delete(delay=ACCEPT_DELETE_AFTER_SECONDS)
-        except Exception:
-            pass
-
-    except Exception as e:
-        reply = await message.reply(
-            f"❌ Klaida patvirtinant taisykles: {e}",
-            mention_author=False
-        )
-
-        try:
-            await message.delete(delay=ACCEPT_DELETE_AFTER_SECONDS)
-            await reply.delete(delay=ACCEPT_DELETE_AFTER_SECONDS)
-        except Exception:
-            pass
-
-    return True
+    remaining = RULES_READ_WAIT_SECONDS - (now - joined_timestamp)
+    return max(0, remaining)
 
 # ======================
-# GAME ROLES
+# WELCOME SISTEMA
 # ======================
 
-async def handle_game_role(message: discord.Message, content: str, user_id: int):
-    if content in GAME_ROLE_NAMES:
-        if not await require_verified(message):
-            return True
+async def send_welcome_message(member: discord.Member):
+    channel = find_welcome_channel(member.guild)
 
-        remaining = cooldown_left(game_role_cooldowns, user_id, GAME_ROLE_COOLDOWN)
+    if not channel:
+        print("ℹ️ Welcome kanalas nerastas.")
+        return
 
-        if remaining > 0:
-            await safe_reply(message, f"⏳ Palauk {remaining}s prieš keičiant žaidimų rolę.")
-            return True
+    member_count = member.guild.member_count or "?"
 
-        role_name = GAME_ROLE_NAMES[content]
-        role = discord.utils.get(message.guild.roles, name=role_name)
+    logo_url = NG_COMMUNITY_LOGO_URL
 
-        if not role:
-            await safe_reply(
-                message,
-                f"❌ Nerasta rolė **{role_name}**. Sukurk ją Discord serveryje."
-            )
-            return True
+    if not logo_url and member.guild.icon:
+        logo_url = member.guild.icon.url
 
-        bot_member = message.guild.get_member(bot.user.id)
+    embed = discord.Embed(
+        title="🌐 ᴡᴇʟᴄᴏᴍᴇ ᴛᴏ ɴɢ ᴄᴏᴍᴍᴜɴɪᴛʏ",
+        description=(
+            f"**Labas, {member.mention}!** 👋\n\n"
+            f"Malonu tave matyti **{member.guild.name}** serveryje. "
+            "Čia gali bendrauti, susirasti žmonių žaidimams, gauti pagalbos ir tiesiog gerai praleisti laiką.\n\n"
+            "Mes norime, kad ši bendruomenė būtų jauki, draugiška ir saugi kiekvienam nariui. 💙"
+        ),
+        color=discord.Color.from_rgb(88, 101, 242)
+    )
 
-        if not bot_member:
-            await safe_reply(message, "❌ Nepavyko rasti boto serveryje.")
-            return True
+    embed.set_author(
+        name=f"{member.display_name} prisijungė prie serverio",
+        icon_url=member.display_avatar.url
+    )
 
-        if bot_member.top_role <= role:
-            await safe_reply(
-                message,
-                f"❌ Mano rolė per žemai. Pakelk boto rolę aukščiau už **{role.name}**."
-            )
-            return True
+    if logo_url:
+        embed.set_thumbnail(url=logo_url)
+    else:
+        embed.set_thumbnail(url=member.display_avatar.url)
 
-        if role in message.author.roles:
-            await safe_reply(
-                message,
-                f"ℹ️ Tu jau turi rolę: **{role.name}**"
-            )
-            return True
+    if WELCOME_BANNER_URL:
+        embed.set_image(url=WELCOME_BANNER_URL)
 
-        try:
-            await message.author.add_roles(role, reason="Žaidimo rolės pasirinkimas")
-            game_role_cooldowns[user_id] = time.time()
+    embed.add_field(
+        name="🤖 Susipažink su manimi — MTX-AI",
+        value=(
+            "Aš esu **MTX-AI** — NG Community pagalbininkas ir automatinė moderacijos sistema.\n\n"
+            "Mane rasi kanale **ᴀɪ-ᴄʜᴀᴛ**. Ten gali manęs klausti apie:\n"
+            "• Valorant rankus, MMR, RR ir agentus;\n"
+            "• FPS, crosshair, sensitivity ir žaidimo nustatymus;\n"
+            "• serverio roles, taisykles ir komandas;\n"
+            "• bendrą pagalbą ar klausimus apie serverį.\n\n"
+            "Ši sistema sukurta tam, kad administracijai nereikėtų visko daryti rankomis, "
+            "o nariai pagalbą gautų greičiau. ✨\n\n"
+            "⚠️ Aš nepadedu su seksualiniu turiniu, smurtu, žiauriais dalykais, cheat, hack, phishing ar kita pavojinga veikla."
+        ),
+        inline=False
+    )
 
-            await safe_reply(
-                message,
-                f"✅ Gavai žaidimo rolę: **{role.name}**"
-            )
-
-        except discord.Forbidden:
-            await safe_reply(
-                message,
-                "❌ Neturiu teisių duoti šios rolės. Reikia **Manage Roles**."
-            )
-
-        except Exception as e:
-            await safe_reply(
-                message,
-                f"❌ Klaida duodant žaidimo rolę: {e}"
+    embed.add_fiel
             )
 
         return True
