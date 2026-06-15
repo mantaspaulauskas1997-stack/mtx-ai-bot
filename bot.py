@@ -2072,7 +2072,699 @@ async def handle_rules_accept(message: discord.Message):
         )
 
     return True
+# ==========================================================
+# NG COMMUNITY PAPILDOMI PATOBULINIMAI
+# ĮKLIJUOTA VIRŠ bot.run(DISCORD_TOKEN)
+# ==========================================================
 
+GAME_ROLES_CHANNEL_NAMES = [
+    "game-roles",
+    "🎮・game-roles",
+    "🎮︱game-roles",
+    "zaidimu-roles",
+    "žaidimų-rolės",
+    "🎮・žaidimų-rolės",
+    "🎮︱žaidimų-rolės",
+    "roles",
+    "rolės"
+]
+
+VALORANT_VERIFY_CHANNEL_NAMES = [
+    "valorant",
+    "valorant-rank",
+    "valorant-verify",
+    "rankai",
+    "🏆・valorant",
+    "🏆︱valorant",
+    "🏆・valorant-rank",
+    "🏆︱valorant-rank"
+]
+
+VALORANT_RANK_IMAGES = {
+    "Iron": "https://media.valorant-api.com/competitivetiers/564d8e28-c226-3180-6285-e48a390db8b1/3/largeicon.png",
+    "Bronze": "https://media.valorant-api.com/competitivetiers/564d8e28-c226-3180-6285-e48a390db8b1/6/largeicon.png",
+    "Silver": "https://media.valorant-api.com/competitivetiers/564d8e28-c226-3180-6285-e48a390db8b1/9/largeicon.png",
+    "Gold": "https://media.valorant-api.com/competitivetiers/564d8e28-c226-3180-6285-e48a390db8b1/12/largeicon.png",
+    "Platinum": "https://media.valorant-api.com/competitivetiers/564d8e28-c226-3180-6285-e48a390db8b1/15/largeicon.png",
+    "Diamond": "https://media.valorant-api.com/competitivetiers/564d8e28-c226-3180-6285-e48a390db8b1/18/largeicon.png",
+    "Ascendant": "https://media.valorant-api.com/competitivetiers/564d8e28-c226-3180-6285-e48a390db8b1/21/largeicon.png",
+    "Immortal": "https://media.valorant-api.com/competitivetiers/564d8e28-c226-3180-6285-e48a390db8b1/24/largeicon.png",
+    "Radiant": "https://media.valorant-api.com/competitivetiers/564d8e28-c226-3180-6285-e48a390db8b1/27/largeicon.png"
+}
+
+VALORANT_BANNER_URL = "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600&auto=format&fit=crop"
+
+
+def find_game_roles_channel(guild: discord.Guild):
+    return find_channel_by_names(
+        guild,
+        GAME_ROLES_CHANNEL_NAMES,
+        ["game-roles", "roles", "rolės", "zaidimu", "žaidimų"]
+    )
+
+
+def find_valorant_verify_channel(guild: discord.Guild):
+    return find_channel_by_names(
+        guild,
+        VALORANT_VERIFY_CHANNEL_NAMES,
+        ["valorant", "rank", "verify", "rankai"]
+    )
+
+
+def find_valorant_link_by_riot(guild_id: int, name: str, tag: str):
+    data = load_valorant_links()
+
+    target_name = name.lower().strip()
+    target_tag = tag.lower().strip()
+
+    for key, record in data.items():
+        if int(record.get("guild_id", 0)) != int(guild_id):
+            continue
+
+        record_name = str(record.get("name", "")).lower().strip()
+        record_tag = str(record.get("tag", "")).lower().strip()
+
+        if record_name == target_name and record_tag == target_tag:
+            return key, record
+
+    return None, None
+
+
+def build_valorant_rank_embed(
+    member: discord.Member,
+    name: str,
+    tag: str,
+    rank: str,
+    rr,
+    elo,
+    role: discord.Role
+):
+    base_rank = get_base_valorant_rank(rank)
+    rank_image = VALORANT_RANK_IMAGES.get(base_rank)
+    next_verify_at = int(time.time()) + VERIFY_COOLDOWN_SECONDS
+
+    embed = discord.Embed(
+        title="🏆 Valorant rank patvirtintas",
+        description=(
+            f"✅ **{member.mention} sėkmingai patvirtino Valorant paskyrą!**\n\n"
+            f"🎮 **Riot ID:** `{name}#{tag}`\n"
+            f"🏆 **Rankas:** `{rank}`\n"
+            f"📊 **RR:** `{rr}`\n"
+            f"🔢 **ELO:** `{elo}`\n"
+            f"🎭 **Uždėta Discord rolė:** {role.mention}"
+        ),
+        color=discord.Color.from_rgb(255, 70, 85)
+    )
+
+    embed.set_author(
+        name=f"{member.display_name} • Valorant Verify",
+        icon_url=member.display_avatar.url
+    )
+
+    embed.set_thumbnail(url=member.display_avatar.url)
+
+    if rank_image:
+        embed.set_image(url=rank_image)
+    else:
+        embed.set_image(url=VALORANT_BANNER_URL)
+
+    embed.add_field(
+        name="🔄 Automatinis rank update",
+        value=f"Rankas bus automatiškai tikrinamas kas **{VALORANT_UPDATE_HOURS} val.**",
+        inline=False
+    )
+
+    embed.add_field(
+        name="⏳ Kitas verify",
+        value=(
+            f"Rank verify vėl galėsi naudoti: **{discord_relative_time(next_verify_at)}**\n"
+            f"🕒 Tikslus laikas: <t:{next_verify_at}:F>"
+        ),
+        inline=False
+    )
+
+    embed.add_field(
+        name="🔒 Account apsauga",
+        value="Šis Riot ID dabar pririštas prie tavo Discord paskyros šiame serveryje.",
+        inline=False
+    )
+
+    footer_icon = member.guild.icon.url if member.guild.icon else member.display_avatar.url
+
+    embed.set_footer(
+        text="NG Community • MTX-AI Valorant sistema",
+        icon_url=footer_icon
+    )
+
+    return embed
+
+
+async def send_welcome_message(member: discord.Member):
+    channel = find_welcome_channel(member.guild)
+
+    if not channel:
+        print("ℹ️ Welcome kanalas nerastas.")
+        return
+
+    rules_channel = find_rules_channel(member.guild)
+    accept_channel = find_rules_accept_channel(member.guild)
+    game_roles_channel = find_game_roles_channel(member.guild)
+    valorant_channel = find_valorant_verify_channel(member.guild)
+
+    member_count = member.guild.member_count or "?"
+
+    logo_url = NG_COMMUNITY_LOGO_URL
+
+    if not logo_url and member.guild.icon:
+        logo_url = member.guild.icon.url
+
+    embed = discord.Embed(
+        title="🌐 Sveikas atvykęs į NG Community!",
+        description=(
+            f"Labas, {member.mention}! 👋\n\n"
+            f"Malonu tave matyti **{member.guild.name}** serveryje.\n"
+            "Kad galėtum naudotis serveriu, turi perskaityti taisykles ir jas patvirtinti."
+        ),
+        color=discord.Color.from_rgb(88, 101, 242)
+    )
+
+    embed.set_author(
+        name=f"{member.display_name} prisijungė prie serverio",
+        icon_url=member.display_avatar.url
+    )
+
+    if logo_url:
+        embed.set_thumbnail(url=logo_url)
+    else:
+        embed.set_thumbnail(url=member.display_avatar.url)
+
+    if WELCOME_BANNER_URL:
+        embed.set_image(url=WELCOME_BANNER_URL)
+
+    embed.add_field(
+        name="1️⃣ Perskaityk taisykles",
+        value=f"Eik į {rules_channel.mention if rules_channel else '`📜・taisykles`'} ir perskaityk serverio taisykles.",
+        inline=False
+    )
+
+    embed.add_field(
+        name="2️⃣ Palauk 1 minutę",
+        value=f"Po prisijungimo turi palaukti bent **{RULES_READ_WAIT_SECONDS // 60} min.**",
+        inline=False
+    )
+
+    embed.add_field(
+        name="3️⃣ Patvirtink taisykles",
+        value=f"Eik į {accept_channel.mention if accept_channel else '`✅・patvirtinimas`'} ir parašyk: `sutinku`",
+        inline=False
+    )
+
+    embed.add_field(
+        name="4️⃣ Pasiimk roles",
+        value=f"Po patvirtinimo galėsi eiti į {game_roles_channel.mention if game_roles_channel else '`🎮・game-roles`'} ir pasiimti žaidimų roles.",
+        inline=False
+    )
+
+    embed.add_field(
+        name="5️⃣ Valorant rank",
+        value=f"Valorant rank verify naudok kanale {valorant_channel.mention if valorant_channel else '`🏆・valorant-rank`'}.",
+        inline=False
+    )
+
+    embed.set_footer(
+        text=f"Tu esi narys #{member_count} • NG Community",
+        icon_url=member.display_avatar.url
+    )
+
+    try:
+        await channel.send(
+            embed=embed,
+            allowed_mentions=discord.AllowedMentions(users=True)
+        )
+    except discord.Forbidden:
+        print("❌ Neturiu teisės siųsti welcome žinutės.")
+    except Exception as e:
+        print(f"❌ Klaida siunčiant welcome žinutę: {e}")
+
+
+async def verify_valorant_account(message: discord.Message, riot_id: str):
+    try:
+        if not message.guild:
+            await message.reply("❌ Ši komanda veikia tik serveryje.", mention_author=False)
+            return
+
+        valorant_channel = find_valorant_verify_channel(message.guild)
+
+        if valorant_channel and message.channel.id != valorant_channel.id:
+            await safe_reply(
+                message,
+                f"🏆 Valorant rank verify naudok kanale {valorant_channel.mention}."
+            )
+            return
+
+        if not await require_verified(message):
+            return
+
+        if "#" not in riot_id:
+            await message.reply(
+                "❌ Naudok taip: `verify Vardas#TAG`\n"
+                "Pvz: `verify Jonas#EUW`",
+                mention_author=False
+            )
+            return
+
+        name, tag = riot_id.split("#", 1)
+        name = name.strip()
+        tag = tag.strip()
+
+        if not name or not tag:
+            await message.reply(
+                "❌ Blogas formatas. Naudok: `verify Vardas#TAG`",
+                mention_author=False
+            )
+            return
+
+        taken_key, taken_record = find_valorant_link_by_riot(message.guild.id, name, tag)
+
+        if taken_record and int(taken_record.get("user_id")) != int(message.author.id):
+            linked_user_id = taken_record.get("user_id")
+
+            await message.reply(
+                f"🚫 Šis Valorant account jau yra pririštas prie kito Discord nario.\n\n"
+                f"🎮 Account: **{name}#{tag}**\n"
+                f"👤 Pririštas prie: <@{linked_user_id}>\n\n"
+                "Jeigu tai tikrai tavo accountas, kreipkis į administraciją.",
+                mention_author=False,
+                allowed_mentions=discord.AllowedMentions.none()
+            )
+            return
+
+        existing_link = get_user_valorant_link(message.guild.id, message.author.id)
+
+        if existing_link:
+            last_manual_verify = existing_link.get("manual_verified_at", 0)
+            now = int(time.time())
+            remaining = VERIFY_COOLDOWN_SECONDS - (now - last_manual_verify)
+
+            if remaining > 0:
+                next_verify_at = last_manual_verify + VERIFY_COOLDOWN_SECONDS
+
+                await message.reply(
+                    f"⏳ Rank verify gali naudoti tik kas **{VERIFY_COOLDOWN_HOURS} val.**\n"
+                    f"Bandyk vėl: **{discord_relative_time(next_verify_at)}**\n"
+                    f"🕒 Tikslus laikas: <t:{next_verify_at}:F>",
+                    mention_author=False
+                )
+                return
+
+        async with message.channel.typing():
+            rank, rr, elo = await fetch_valorant_rank(name, tag)
+            base_rank, role = await update_valorant_rank_role(message.guild, message.author, rank)
+
+            save_user_valorant_link(
+                guild_id=message.guild.id,
+                user_id=message.author.id,
+                name=name,
+                tag=tag,
+                rank=rank
+            )
+
+        embed = build_valorant_rank_embed(
+            member=message.author,
+            name=name,
+            tag=tag,
+            rank=rank,
+            rr=rr,
+            elo=elo,
+            role=role
+        )
+
+        await message.reply(
+            embed=embed,
+            mention_author=False,
+            allowed_mentions=discord.AllowedMentions(users=True)
+        )
+
+    except Exception as e:
+        await message.reply(
+            f"❌ Klaida tikrinant Valorant ranką: {e}",
+            mention_author=False
+        )
+
+
+async def handle_game_role(message: discord.Message, content: str, user_id: int):
+    if not message.guild:
+        return False
+
+    content = content.lower().strip()
+
+    add_aliases = {
+        "valorant": "valorant",
+        "cs2": "cs2",
+        "roblox": "roblox",
+        "minecraft": "minecraft",
+        "minicraft": "minicraft"
+    }
+
+    remove_prefixes = [
+        "remove ",
+        "nuimti ",
+        "nusiimti ",
+        "atimti "
+    ]
+
+    possible_game_commands = [
+        "valorant",
+        "cs2",
+        "roblox",
+        "minecraft",
+        "minicraft",
+        "remove valorant",
+        "remove cs2",
+        "remove roblox",
+        "remove minecraft",
+        "remove minicraft",
+        "nuimti valorant",
+        "nuimti cs2",
+        "nuimti roblox",
+        "nuimti minecraft",
+        "nusiimti valorant",
+        "nusiimti cs2",
+        "nusiimti roblox",
+        "nusiimti minecraft"
+    ]
+
+    game_roles_channel = find_game_roles_channel(message.guild)
+
+    if content in possible_game_commands:
+        if game_roles_channel and message.channel.id != game_roles_channel.id:
+            await safe_reply(
+                message,
+                f"🎮 Žaidimų roles gali pasiimti tik kanale {game_roles_channel.mention}."
+            )
+            return True
+
+    if content in add_aliases:
+        if not await require_verified(message):
+            return True
+
+        remaining = cooldown_left(game_role_cooldowns, user_id, GAME_ROLE_COOLDOWN)
+
+        if remaining > 0:
+            await safe_reply(
+                message,
+                f"⏳ Palauk {remaining}s prieš keičiant žaidimų rolę."
+            )
+            return True
+
+        game_key = add_aliases[content]
+        role_name = GAME_ROLE_NAMES[game_key]
+        role = discord.utils.get(message.guild.roles, name=role_name)
+
+        if not role:
+            await safe_reply(message, f"❌ Nerasta rolė **{role_name}**.")
+            return True
+
+        if role in message.author.roles:
+            await safe_reply(message, f"ℹ️ Tu jau turi rolę: **{role.name}**")
+            return True
+
+        bot_member = message.guild.get_member(bot.user.id)
+
+        if not bot_member:
+            await safe_reply(message, "❌ Nepavyko rasti boto serveryje.")
+            return True
+
+        if bot_member.top_role <= role:
+            await safe_reply(
+                message,
+                f"❌ Mano rolė per žemai. Pakelk boto rolę aukščiau už **{role.name}**."
+            )
+            return True
+
+        try:
+            await message.author.add_roles(role, reason="Žaidimo rolės pasirinkimas")
+            game_role_cooldowns[user_id] = time.time()
+
+            await safe_reply(
+                message,
+                f"✅ Gavai žaidimo rolę: **{role.name}**"
+            )
+
+        except discord.Forbidden:
+            await safe_reply(message, "❌ Neturiu teisių duoti šios rolės.")
+
+        except Exception as e:
+            await safe_reply(message, f"❌ Klaida duodant žaidimo rolę: {e}")
+
+        return True
+
+    for prefix in remove_prefixes:
+        if content.startswith(prefix):
+            game_name = content[len(prefix):].strip()
+
+            if game_name not in add_aliases:
+                return False
+
+            if not await require_verified(message):
+                return True
+
+            remaining = cooldown_left(game_role_cooldowns, user_id, GAME_ROLE_COOLDOWN)
+
+            if remaining > 0:
+                await safe_reply(
+                    message,
+                    f"⏳ Palauk {remaining}s prieš keičiant žaidimų rolę."
+                )
+                return True
+
+            game_key = add_aliases[game_name]
+            role_name = GAME_ROLE_NAMES[game_key]
+            role = discord.utils.get(message.guild.roles, name=role_name)
+
+            if not role:
+                await safe_reply(message, f"❌ Nerasta rolė **{role_name}**.")
+                return True
+
+            if role not in message.author.roles:
+                await safe_reply(message, f"ℹ️ Tu neturi rolės: **{role.name}**")
+                return True
+
+            bot_member = message.guild.get_member(bot.user.id)
+
+            if not bot_member:
+                await safe_reply(message, "❌ Nepavyko rasti boto serveryje.")
+                return True
+
+            if bot_member.top_role <= role:
+                await safe_reply(
+                    message,
+                    f"❌ Mano rolė per žemai. Pakelk boto rolę aukščiau už **{role.name}**."
+                )
+                return True
+
+            try:
+                await message.author.remove_roles(role, reason="Žaidimo rolės nuėmimas")
+                game_role_cooldowns[user_id] = time.time()
+
+                await safe_reply(
+                    message,
+                    f"✅ Nusiėmei žaidimo rolę: **{role.name}**"
+                )
+
+            except discord.Forbidden:
+                await safe_reply(message, "❌ Neturiu teisių nuimti šios rolės.")
+
+            except Exception as e:
+                await safe_reply(message, f"❌ Klaida nuimant žaidimo rolę: {e}")
+
+            return True
+
+    return False
+
+
+@bot.command(name="setuptaisykles", aliases=["setuprules"])
+@commands.has_permissions(administrator=True)
+async def setup_rules_embed(ctx):
+    rules_channel = find_rules_channel(ctx.guild)
+    accept_channel = find_rules_accept_channel(ctx.guild)
+
+    target_channel = rules_channel or ctx.channel
+
+    embed = discord.Embed(
+        title="📜 NG Community taisyklės",
+        description=(
+            "Sveikas atvykęs į **NG Community**!\n\n"
+            "Prieš naudodamasis serveriu, privalai perskaityti taisykles. "
+            f"Patvirtinti galėsi po **{RULES_READ_WAIT_SECONDS // 60} min.** nuo prisijungimo."
+        ),
+        color=discord.Color.from_rgb(88, 101, 242)
+    )
+
+    embed.add_field(
+        name="1️⃣ Pagarba",
+        value="Gerbk kitus narius. Įžeidinėjimai, patyčios ir provokacijos draudžiamos.",
+        inline=False
+    )
+
+    embed.add_field(
+        name="2️⃣ Spam draudžiamas",
+        value="Nespamink žinutėmis, emoji, mentionais ar pasikartojančiu tekstu.",
+        inline=False
+    )
+
+    embed.add_field(
+        name="3️⃣ Keiksmažodžiai / įžeidimai",
+        value="Keiksmažodžiai, stiprūs įžeidimai, grasinimai, rasizmas ir neapykantos kalba draudžiama.",
+        inline=False
+    )
+
+    embed.add_field(
+        name="4️⃣ Reklama",
+        value="Reklama be administracijos leidimo draudžiama.",
+        inline=False
+    )
+
+    embed.add_field(
+        name="5️⃣ Cheat / hack / scam",
+        value="Cheat, hack, phishing, scam, token grabberiai ir panaši veikla draudžiama.",
+        inline=False
+    )
+
+    embed.add_field(
+        name="6️⃣ Discord tvarka",
+        value="Laikykis Discord ToS ir serverio administracijos nurodymų.",
+        inline=False
+    )
+
+    if accept_channel:
+        confirm_text = f"✅ Patvirtinti taisykles reikia kanale {accept_channel.mention} parašant: `sutinku`"
+    else:
+        confirm_text = "✅ Patvirtinti taisykles reikia patvirtinimo kanale parašant: `sutinku`"
+
+    embed.add_field(
+        name="✅ Patvirtinimas",
+        value=confirm_text,
+        inline=False
+    )
+
+    embed.set_footer(text="NG Community • Taisyklės")
+
+    await target_channel.send(embed=embed)
+    await ctx.reply(
+        f"✅ Taisyklių embed išsiųstas į {target_channel.mention}.",
+        mention_author=False
+    )
+
+
+@bot.command(name="setupgameroles")
+@commands.has_permissions(administrator=True)
+async def setup_game_roles_embed(ctx):
+    game_roles_channel = find_game_roles_channel(ctx.guild)
+    target_channel = game_roles_channel or ctx.channel
+
+    embed = discord.Embed(
+        title="🎮 Žaidimų rolės",
+        description=(
+            "Čia gali pasirinkti žaidimų roles.\n\n"
+            "Parašyk žaidimo pavadinimą šiame kanale, kad gautum rolę."
+        ),
+        color=discord.Color.from_rgb(88, 101, 242)
+    )
+
+    embed.add_field(
+        name="🎯 Galimos rolės",
+        value=(
+            "`valorant` — gauti **Valorant** rolę\n"
+            "`cs2` — gauti **CS2** rolę\n"
+            "`roblox` — gauti **Roblox** rolę\n"
+            "`minecraft` — gauti **Minecraft** rolę"
+        ),
+        inline=False
+    )
+
+    embed.add_field(
+        name="❌ Rolės nuėmimas",
+        value=(
+            "`remove valorant`\n"
+            "`remove cs2`\n"
+            "`remove roblox`\n"
+            "`remove minecraft`"
+        ),
+        inline=False
+    )
+
+    embed.add_field(
+        name="⚠️ Svarbu",
+        value=(
+            "Žaidimų roles gali naudoti tik patvirtinti nariai.\n"
+            f"Cooldown: **{GAME_ROLE_COOLDOWN} sek.**"
+        ),
+        inline=False
+    )
+
+    embed.set_footer(text="NG Community • Game roles")
+
+    await target_channel.send(embed=embed)
+    await ctx.reply(
+        f"✅ Game roles embed išsiųstas į {target_channel.mention}.",
+        mention_author=False
+    )
+
+
+@bot.command(name="setupvalorant")
+@commands.has_permissions(administrator=True)
+async def setup_valorant_embed(ctx):
+    valorant_channel = find_valorant_verify_channel(ctx.guild)
+    target_channel = valorant_channel or ctx.channel
+
+    embed = discord.Embed(
+        title="🏆 Valorant rank sistema",
+        description=(
+            "Čia gali patvirtinti savo Valorant ranką ir gauti atitinkamą Discord rolę.\n\n"
+            "Naudok komandą:\n"
+            "`verify Vardas#TAG`\n\n"
+            "Pavyzdys:\n"
+            "`verify Jonas#EUW`"
+        ),
+        color=discord.Color.from_rgb(255, 70, 85)
+    )
+
+    embed.set_image(url=VALORANT_BANNER_URL)
+
+    embed.add_field(
+        name="🎭 Rank rolės",
+        value=(
+            "**Iron, Bronze, Silver, Gold, Platinum, Diamond, Ascendant, Immortal, Radiant**"
+        ),
+        inline=False
+    )
+
+    embed.add_field(
+        name="🔒 Account apsauga",
+        value=(
+            "Vienas Riot ID gali būti pririštas tik prie vieno Discord nario šiame serveryje.\n"
+            "Jeigu account jau užimtas, kreipkis į administraciją."
+        ),
+        inline=False
+    )
+
+    embed.add_field(
+        name="⏳ Cooldown",
+        value=(
+            f"Rank verify galima naudoti kas **{VERIFY_COOLDOWN_HOURS} val.**\n"
+            f"Rankai automatiškai atnaujinami kas **{VALORANT_UPDATE_HOURS} val.**"
+        ),
+        inline=False
+    )
+
+    embed.set_footer(text="NG Community • Valorant rank system")
+
+    await target_channel.send(embed=embed)
+    await ctx.reply(
+        f"✅ Valorant rank embed išsiųstas į {target_channel.mention}.",
+        mention_author=False
+    )
 # ======================
 # PALEIDIMAS
 # ======================
