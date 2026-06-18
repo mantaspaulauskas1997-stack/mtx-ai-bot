@@ -1467,9 +1467,13 @@ async def on_ready():
     print(f"✅ Serverių kiekis: {len(bot.guilds)}")
     print("VALORANT DATA:", load_valorant_links())
 
-    if not valorant_rank_auto_update.is_running():
+        if not valorant_rank_auto_update.is_running():
         valorant_rank_auto_update.start()
         print("✅ Valorant rank auto update paleistas kas 1 val.")
+
+    if not rotate_status.is_running():
+        rotate_status.start()
+        print("✅ Status rotacija paleista.")
 
 @bot.event
 async def on_member_join(member: discord.Member):
