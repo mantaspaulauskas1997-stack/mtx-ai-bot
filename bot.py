@@ -1417,7 +1417,7 @@ async def on_ready():
 
     if not valorant_rank_auto_update.is_running():
         valorant_rank_auto_update.start()
-        print(f"✅ Valorant rank auto update paleistas kas {VALORANT_UPDATE_HOURS} val.")
+        print(f"✅ Valorant rank auto update paleistas kas VALORANT_UPDATE_HOURS = 1
 
 
 @bot.event
