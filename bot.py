@@ -1768,6 +1768,31 @@ async def verify(ctx, *, riot_id: str):
 
     await verify_valorant_account(ctx.message, riot_id)
 
+@bot.command(name="addvalorantrole")
+@commands.has_permissions(administrator=True)
+async def add_valorant_role(ctx):
+    role = discord.utils.get(ctx.guild.roles, name="Valorant")
+
+    if role is None:
+        await ctx.send("❌ Nerasta rolė 'Valorant'")
+        return
+
+    added = 0
+
+    for member in ctx.guild.members:
+        if member.bot:
+            continue
+
+        if role not in member.roles:
+            try:
+                await member.add_roles(role)
+                added += 1
+            except Exception as e:
+                print(f"Klaida {member}: {e}")
+
+    await ctx.send(f"✅ Valorant rolė uždėta {added} nariams.")
+
+
 
 @bot.command(name="valorantupdate", aliases=["rankupdate"])
 @commands.has_permissions(administrator=True)
