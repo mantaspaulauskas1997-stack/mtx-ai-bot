@@ -1454,12 +1454,14 @@ async def rotate_status():
 
 @bot.event
 async def on_ready():
-print(f"✅ Botas prisijungė: {bot.user}")
-print(f"✅ Serverių kiekis: {len(bot.guilds)}")
-print("VALORANT DATA:", load_valorant_links())
-print("==============================")
+    print("==============================")
+    print(f"✅ Botas prisijungė: {bot.user}")
+    print(f"✅ Serverių kiekis: {len(bot.guilds)}")
+    print("VALORANT DATA:", load_valorant_links())
+
     if not rotate_status.is_running():
         rotate_status.start()
+
     for guild in bot.guilds:
         print(f"📌 Serveris: {guild.name} | ID: {guild.id}")
 
