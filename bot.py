@@ -1798,6 +1798,16 @@ async def add_valorant_role(ctx):
     await ctx.send(f"✅ Valorant rolė uždėta {added} nariams.")
 
 
+@bot.command(name="nightmarket", aliases=["nm"])
+async def nightmarket(ctx):
+    await ctx.reply(
+        "🌙 **Valorant Night Market**\n\n"
+        "Night Market vyksta tik tam tikrais Riot nustatytais laikotarpiais.\n"
+        "🎮 Patikrinti naujausią informaciją gali čia:\n"
+        "https://playvalorant.com/\n\n"
+        "Kai Night Market aktyvus, gausi atsitiktines nuolaidas skinams.",
+        mention_author=False
+    )
 
 @bot.command(name="valorantupdate", aliases=["rankupdate"])
 @commands.has_permissions(administrator=True)
