@@ -1411,11 +1411,41 @@ async def valorant_rank_auto_update():
     await update_all_valorant_ranks()
 
 
-@tasks.loop(seconds=30)
+@tasks.loop(seconds=20)
 async def rotate_status():
-    await bot.change_presence(
-        activity=discord.Game(name="Valorant Tracker")
+    guild = bot.guilds[0]
+
+    total_members = guild.member_count
+    online_members = sum(
+        1 for member in guild.members
+        if member.status != discord.Status.offline
     )
+
+    try:
+        valorant_links = load_valorant_links()
+        linked_accounts = len(valorant_links)
+    except:
+        linked_accounts = 0
+
+    statuses = [
+        f"👥 {total_members} narių",
+        f"🟢 {online_members} online",
+        f"🎮 {linked_accounts} Valorant paskyrų",
+        "🏆 Valorant Tracker",
+        "/help"
+    ]
+
+    if not hasattr(rotate_status, "index"):
+        rotate_status.index = 0
+
+    await bot.change_presence(
+        activity=discord.Activity(
+            type=discord.ActivityType.watching,
+            name=statuses[rotate_status.index]
+        )
+    )
+
+    rotate_status.index = (rotate_status.index + 1) % len(statuses)
 
 # =====================
 # BOT READY / JOIN
