@@ -915,8 +915,6 @@ async def verify_valorant_account(message: discord.Message, riot_id: str):
     rank=rank
 )
 
-print("DEBUG SAVE:", load_valorant_links())
-
 next_verify_at = int(time.time()) + VERIFY_COOLDOWN_SECONDS
 
         await message.reply(
