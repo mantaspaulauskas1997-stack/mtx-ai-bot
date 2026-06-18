@@ -883,7 +883,7 @@ async def verify_valorant_account(message: discord.Message, riot_id: str):
                 "❌ Blogas formatas. Naudok: `verify Vardas#TAG`",
                 mention_author=False
             )
-            return
+                            return
 
         existing_link = get_user_valorant_link(message.guild.id, message.author.id)
 
