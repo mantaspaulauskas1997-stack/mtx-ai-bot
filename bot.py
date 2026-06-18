@@ -113,7 +113,7 @@ NG_COMMUNITY_LOGO_URL = ""
 # ======================
 
 VALORANT_REGION = "eu"
-VALORANT_UPDATE_HOURS = 12
+VALORANT_UPDATE_HOURS = 2
 VALORANT_LINKS_FILE = "valorant_links.json"
 
 VERIFY_COOLDOWN_HOURS = 4
@@ -908,11 +908,14 @@ async def verify_valorant_account(message: discord.Message, riot_id: str):
             base_rank, role = await update_valorant_rank_role(message.guild, message.author, rank)
 
             save_user_valorant_link(
-                guild_id=message.guild.id,
-                user_id=message.author.id,
-                name=name,
-                tag=tag,
-                rank=rank
+    guild_id=message.guild.id,
+    user_id=message.author.id,
+    name=name,
+    tag=tag,
+    rank=rank
+)
+
+print("DEBUG SAVE:", load_valorant_links())
             )
 
         next_verify_at = int(time.time()) + VERIFY_COOLDOWN_SECONDS
