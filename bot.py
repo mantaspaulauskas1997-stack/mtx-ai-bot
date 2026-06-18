@@ -2832,4 +2832,3 @@ async def checkroles(ctx):
     )
 
 bot.run(DISCORD_TOKEN)
-)
