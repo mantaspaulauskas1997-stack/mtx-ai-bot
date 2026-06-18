@@ -263,6 +263,7 @@ client_ai = AsyncOpenAI(api_key=OPENAI_API_KEY)
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
+intents.presences = True
 
 bot = commands.Bot(
     command_prefix="!",
