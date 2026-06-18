@@ -285,8 +285,8 @@ async def rotate_status():
         activity=discord.Activity(
             type=discord.ActivityType.watching,
             name=status
-        )
-    
+        
+     )
 # ======================
 # ATMINTIS
 # ======================
