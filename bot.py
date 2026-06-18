@@ -1464,8 +1464,7 @@ async def rotate_status():
 async def on_ready():
     print("==============================")
     print(f"✅ Botas prisijungė: {bot.user}")
-    print(f"✅ Serverių kiekis: {len(bot.guilds)}")
-    print("VALORANT DATA:", load_valorant_links())
+    print(f"✅ Server
 
     if not valorant_rank_auto_update.is_running():
     valorant_rank_auto_update.start()
