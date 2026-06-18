@@ -1853,7 +1853,30 @@ async def manual_valorant_update(ctx):
     except Exception as e:
         await ctx.send(f"❌ Klaida paleidžiant rankų update: {e}")
 
+main_agents = {}
 
+@bot.command(name="main")
+async def set_main_agent(ctx, agent: str):
+    agent = agent.lower()
+
+    valid_agents = [
+        "jett", "reyna", "sage", "omen", "raze",
+        "phoenix", "sova", "cypher", "killjoy",
+        "yoru", "fade", "gekko", "clove", "iso"
+    ]
+
+    if agent not in valid_agents:
+        await ctx.send(
+            "❌ Neteisingas agentas.\n\n"
+            f"Galimi: {', '.join(valid_agents)}"
+        )
+        return
+
+    main_agents[str(ctx.author.id)] = agent
+
+    await ctx.send(
+        f"✅ {ctx.author.mention} pasirinko pagrindinį agentą: **{agent.title()}**"
+    )
 @bot.command(name="ask", aliases=["ai", "klausimas"])
 async def ask_ai(ctx, *, question: str):
     user_id = ctx.author.id
