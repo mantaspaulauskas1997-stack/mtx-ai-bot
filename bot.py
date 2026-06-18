@@ -903,11 +903,15 @@ async def verify_valorant_account(message: discord.Message, riot_id: str):
                 )
                 return
 
-        async with message.channel.typing():
+                async with message.channel.typing():
             rank, rr, elo = await fetch_valorant_rank(name, tag)
-            base_rank, role = await update_valorant_rank_role(message.guild, message.author, rank)
+            base_rank, role = await update_valorant_rank_role(
+                message.guild,
+                message.author,
+                rank
+            )
 
-                        save_user_valorant_link(
+            save_user_valorant_link(
                 guild_id=message.guild.id,
                 user_id=message.author.id,
                 name=name,
