@@ -277,7 +277,6 @@ async def rotate_status():
     "📢 /help",
     f"👥 {bot.guilds[0].member_count} narių"
 ]
-    ]
 
     status = statuses[rotate_status.current_loop % len(statuses)]
 
@@ -285,8 +284,8 @@ async def rotate_status():
         activity=discord.Activity(
             type=discord.ActivityType.watching,
             name=status
-        
-     )
+        )
+    )
 # ======================
 # ATMINTIS
 # ======================
