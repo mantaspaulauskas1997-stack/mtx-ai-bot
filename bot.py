@@ -1471,6 +1471,8 @@ async def on_ready():
         valorant_rank_auto_update.start()
         print("✅ Valorant rank auto update paleistas kas 1 val.")
 
+@bot.event
+async def on_member_join(member: discord.Member):
     role = discord.utils.get(guild.roles, name="Valorant")
 
     if role:
