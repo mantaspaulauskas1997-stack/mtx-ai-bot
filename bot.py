@@ -2784,8 +2784,52 @@ async def setup_valorant_embed(ctx):
         f"✅ Valorant rank embed išsiųstas į {target_channel.mention}.",
         mention_author=False
     )
-# ======================
+# =====================
 # PALEIDIMAS
-# ======================
+# =====================
+
+@bot.command()
+@commands.has_permissions(administrator=True)
+async def checkroles(ctx):
+    await ctx.send("🔄 Tikrinu Valorant roles...")
+
+    data = load_valorant_links()
+
+    updated = 0
+    failed = 0
+
+    for player in data.values():
+        try:
+            member = ctx.guild.get_member(player["user_id"])
+
+            if not member:
+                continue
+
+            rank, rr, elo = await fetch_valorant_rank(
+                player["name"],
+                player["tag"]
+            )
+
+            await update_valorant_rank_role(
+                ctx.guild,
+                member,
+                rank
+            )
+
+            update_user_last_rank(
+                ctx.guild.id,
+                member.id,
+                rank
+            )
+
+            updated += 1
+
+        except Exception:
+            failed += 1
+
+    await ctx.send(
+        f"✅ Patikrinta: {updated}\n❌ Klaidų: {failed}"
+    )
 
 bot.run(DISCORD_TOKEN)
+)
