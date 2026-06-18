@@ -1410,9 +1410,16 @@ async def valorant_rank_auto_update():
     await bot.wait_until_ready()
     await update_all_valorant_ranks()
 
-# ======================
+
+@tasks.loop(seconds=30)
+async def rotate_status():
+    await bot.change_presence(
+        activity=discord.Game(name="Valorant Tracker")
+    )
+
+# =====================
 # BOT READY / JOIN
-# ======================
+# =====================
 
 @bot.event
 async def on_ready():
