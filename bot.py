@@ -269,7 +269,22 @@ bot = commands.Bot(
     intents=intents,
     help_command=None
 )
+@tasks.loop(seconds=30)
+async def rotate_status():
+    statuses = [
+        "👥 Prižiūriu serverį",
+        "🎮 Valorant",
+        "📢 /help"
+    ]
 
+    status = statuses[rotate_status.current_loop % len(statuses)]
+
+    await bot.change_presence(
+        activity=discord.Activity(
+            type=discord.ActivityType.watching,
+            name=status
+        )
+    )
 # ======================
 # ATMINTIS
 # ======================
