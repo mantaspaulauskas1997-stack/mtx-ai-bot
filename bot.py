@@ -1808,7 +1808,40 @@ async def nightmarket(ctx):
         "Kai Night Market aktyvus, gausi atsitiktines nuolaidas skinams.",
         mention_author=False
     )
+@bot.command(name="crosshair")
+async def crosshair(ctx):
+    await ctx.reply(
+        "🎯 **Populiarūs Valorant Crosshair kodai**\n\n"
+        "🔹 TenZ\n"
+        "`0;s;1;P;c;5;o;1;0t;1;0l;4;0o;2;0a;1;0f;0;1b;0`\n\n"
+        "🔹 Demon1\n"
+        "`0;P;c;5;h;0;f;0;0t;1;0l;3;0o;2;0a;1`\n\n"
+        "🔹 yay\n"
+        "`0;P;c;5;h;0;f;0;0t;1;0l;4;0o;2;0a;1`\n\n"
+        "⚙️ Settings → Crosshair → Import Profile Code",
+        mention_author=False
+    )
 
+
+@bot.command(name="valorantnews", aliases=["vnews"])
+async def valorant_news(ctx):
+    await ctx.reply(
+        "📰 **Valorant naujienos**\n\n"
+        "🔗 https://playvalorant.com/en-us/news/\n\n"
+        "Čia rasi naujausius patch notes, agentų pakeitimus, žemėlapių naujienas ir eventus.",
+        mention_author=False
+    )
+
+
+@bot.command(name="bundle")
+async def bundle(ctx):
+    await ctx.reply(
+        "💎 **Valorant Bundle informacija**\n\n"
+        "🔗 https://playvalorant.com/\n\n"
+        "Aktyvų Bundle gali rasti žaidimo Store skiltyje.\n"
+        "Taip pat čia skelbiami nauji skinų rinkiniai ir Night Market informacija.",
+        mention_author=False
+    )
 @bot.command(name="valorantupdate", aliases=["rankupdate"])
 @commands.has_permissions(administrator=True)
 async def manual_valorant_update(ctx):
