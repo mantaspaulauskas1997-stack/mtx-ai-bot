@@ -296,9 +296,8 @@ async def auto_valorant_role_check():
                     print(f"✅ Uždėta Valorant rolė: {member}")
 
             except Exception as e:
-                print(f"❌ Valorant role error: {e}")
-        )
-    )
+              print(f"❌ Valorant role error: {e}")
+
 # ======================
 # ATMINTIS
 # ======================
