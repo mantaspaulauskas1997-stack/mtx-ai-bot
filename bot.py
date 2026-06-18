@@ -1467,15 +1467,27 @@ async def on_ready():
     print(f"✅ Serverių kiekis: {len(bot.guilds)}")
     print("VALORANT DATA:", load_valorant_links())
 
-    if not rotate_status.is_running():
-        rotate_status.start()
-
-    for guild in bot.guilds:
-        print(f"📌 Serveris: {guild.name} | ID: {guild.id}")
-
     if not valorant_rank_auto_update.is_running():
-        valorant_rank_auto_update.start()
-        print("✅ Valorant rank auto update paleistas kas 1 val.")
+    valorant_rank_auto_update.start()
+    print("✅ Valorant rank auto update paleistas kas 1 val.")
+
+    role = discord.utils.get(guild.roles, name="Valorant")
+
+    if role:
+        for member in guild.members:
+            if member.bot:
+                continue
+
+            if role not in member.roles:
+                try:
+                    await member.add_roles(
+                        role,
+                        reason="Automatinė Valorant rolė"
+                    )
+                except Exception as e:
+                    print(f"Klaida dedant Valorant role {member}: {e}")
+
+    print("✅ Valorant rolės patikrintos")
 
 @bot.event
 async def on_member_join(member: discord.Member):
