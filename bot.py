@@ -306,6 +306,9 @@ async def auto_valorant_role_check():
 user_memory = defaultdict(lambda: deque(maxlen=10))
 
 ai_cooldowns = {}
+
+user_xp = {}
+
 role_cooldowns = {}
 game_role_cooldowns = {}
 
@@ -1523,10 +1526,24 @@ async def on_message(message: discord.Message):
         return
 
     content = message.content.lower().strip()
-    user_id = message.author.id
+user_id = message.author.id
 
-    if await handle_spam(message):
-        return
+if str(user_id) not in user_xp:
+    user_xp[str(user_id)] = {"xp": 0, "level": 1}
+
+user_xp[str(user_id)]["xp"] += 5
+
+xp = user_xp[str(user_id)]["xp"]
+level = user_xp[str(user_id)]["level"]
+
+if xp >= level * 100:
+    user_xp[str(user_id)]["level"] += 1
+
+    await message.channel.send(
+        f"🎉 {message.author.mention} pasiekė **{level + 1} lygį!**"
+    )
+if await handle_spam(message):
+    return
 
     if await handle_profanity(message):
         return
