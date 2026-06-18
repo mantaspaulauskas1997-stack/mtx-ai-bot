@@ -1464,11 +1464,12 @@ async def rotate_status():
 async def on_ready():
     print("==============================")
     print(f"✅ Botas prisijungė: {bot.user}")
-    print(f"✅ Server
+    print(f"✅ Serverių kiekis: {len(bot.guilds)}")
+    print("VALORANT DATA:", load_valorant_links())
 
     if not valorant_rank_auto_update.is_running():
-    valorant_rank_auto_update.start()
-    print("✅ Valorant rank auto update paleistas kas 1 val.")
+        valorant_rank_auto_update.start()
+        print("✅ Valorant rank auto update paleistas kas 1 val.")
 
     role = discord.utils.get(guild.roles, name="Valorant")
 
