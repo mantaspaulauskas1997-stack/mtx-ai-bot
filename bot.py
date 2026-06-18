@@ -1427,8 +1427,7 @@ async def on_ready():
 
     if not valorant_rank_auto_update.is_running():
         valorant_rank_auto_update.start()
-        print(f"✅ Valorant rank auto update paleistas kas VALORANT_UPDATE_HOURS = 1
-
+        print("✅ Valorant rank auto update paleistas kas 1 val.")
 
 @bot.event
 async def on_member_join(member: discord.Member):
