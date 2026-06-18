@@ -271,10 +271,12 @@ bot = commands.Bot(
 )
 @tasks.loop(seconds=30)
 async def rotate_status():
-    statuses = [
-        "👥 Prižiūriu serverį",
-        "🎮 Valorant",
-        "📢 /help"
+   statuses = [
+    "👥 Prižiūriu serverį",
+    "🎮 Valorant",
+    "📢 /help",
+    f"👥 {bot.guilds[0].member_count} narių"
+]
     ]
 
     status = statuses[rotate_status.current_loop % len(statuses)]
