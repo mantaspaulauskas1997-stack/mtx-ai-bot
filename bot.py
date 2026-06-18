@@ -269,23 +269,34 @@ bot = commands.Bot(
     intents=intents,
     help_command=None
 )
-@tasks.loop(seconds=30)
-async def rotate_status():
-    member_count = bot.guilds[0].member_count if bot.guilds else 0
+@tasks.loop(minutes=30)
+async def auto_valorant_role_check():
+    role_name = "Valorant"
 
-    statuses = [
-        "🎩 Prižiūriu serverį",
-        "🎮 Valorant",
-        "📢 /help",
-        f"👥 {member_count} narių"
-    ]
+    for guild in bot.guilds:
+        role = discord.utils.get(guild.roles, name=role_name)
 
-    status = statuses[rotate_status.current_loop % len(statuses)]
+        if role is None:
+            continue
 
-    await bot.change_presence(
-        activity=discord.Activity(
-            type=discord.ActivityType.watching,
-            name=status
+        data = load_valorant_links()
+
+        for player in data.values():
+            try:
+                if player["guild_id"] != guild.id:
+                    continue
+
+                member = guild.get_member(player["user_id"])
+
+                if member is None:
+                    continue
+
+                if role not in member.roles:
+                    await member.add_roles(role)
+                    print(f"✅ Uždėta Valorant rolė: {member}")
+
+            except Exception as e:
+                print(f"❌ Valorant role error: {e}")
         )
     )
 # ======================
