@@ -309,9 +309,43 @@ ai_cooldowns = {}
 
 user_xp = {}
 
+VALORANT_RANKS = [
+    (0, "Iron 1"),
+    (100, "Iron 2"),
+    (250, "Iron 3"),
+    (500, "Bronze 1"),
+    (800, "Bronze 2"),
+    (1200, "Bronze 3"),
+    (1700, "Silver 1"),
+    (2300, "Silver 2"),
+    (3000, "Silver 3"),
+    (4000, "Gold 1"),
+    (5200, "Gold 2"),
+    (6500, "Gold 3"),
+    (8000, "Platinum 1"),
+    (10000, "Platinum 2"),
+    (12500, "Platinum 3"),
+    (15000, "Diamond 1"),
+    (18000, "Diamond 2"),
+    (22000, "Diamond 3"),
+    (26000, "Ascendant 1"),
+    (32000, "Ascendant 2"),
+    (38000, "Ascendant 3"),
+    (45000, "Immortal"),
+    (60000, "Radiant")
+]
+
+def get_valorant_rank(xp):
+    rank = "Iron 1"
+
+    for required_xp, rank_name in VALORANT_RANKS:
+        if xp >= required_xp:
+            rank = rank_name
+
+    return rank
+
 role_cooldowns = {}
 game_role_cooldowns = {}
-
 spam_messages = defaultdict(lambda: deque(maxlen=30))
 spam_offenses = defaultdict(lambda: {"count": 0, "last": 0})
 spam_punish_cooldowns = {}
@@ -1884,6 +1918,20 @@ async def set_main_agent(ctx, agent: str):
 
     await ctx.send(
         f"✅ {ctx.author.mention} pasirinko pagrindinį agentą: **{agent.title()}**"
+    @bot.command()
+async def rank(ctx):
+    user_id = str(ctx.author.id)
+
+    if user_id not in user_xp:
+        await ctx.send("❌ Neturi XP.")
+        return
+
+    xp = user_xp[user_id]["xp"]
+    rank_name = get_valorant_rank(xp)
+
+    await ctx.send(
+        f"🎯 Rangas: **{rank_name}**\n"
+        f"⭐ XP: **{xp}**"
     )
 @bot.command(name="ask", aliases=["ai", "klausimas"])
 async def ask_ai(ctx, *, question: str):
