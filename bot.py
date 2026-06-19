@@ -1547,11 +1547,6 @@ async def on_member_join(member: discord.Member):
 # ŽINUČIŲ LOGIKA
 # ======================
 
-@bot.command()
-async def top(ctx):
-    await ctx.send(f"DEBUG: {user_xp}")
-
-
 @bot.command(name="ask", aliases=["ai", "klausimas"])
 async def ask_ai(ctx, *, question: str):
 
