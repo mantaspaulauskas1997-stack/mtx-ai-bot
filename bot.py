@@ -1547,9 +1547,6 @@ async def on_member_join(member: discord.Member):
 # ŽINUČIŲ LOGIKA
 # ======================
 
-@bot.command(name="ask", aliases=["ai", "klausimas"])
-async def ask_ai(ctx, *, question: str):
-
     # ======================
     # VYRAS / PANELĖ
     # ======================
