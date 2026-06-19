@@ -310,6 +310,11 @@ ai_cooldowns = {}
 
 user_xp = {}
 
+player_inventory = {}
+blackjack_xp = {}
+daily_case = {}
+market = {}
+guilds = {}
 VALORANT_RANKS = [
     (0, "Iron 1"),
     (100, "Iron 2"),
@@ -3211,6 +3216,95 @@ async def on_message(message):
         await message.channel.send(
             f"🎉 {message.author.mention} pasiekė **Level {new_level}**!"
         )
+import random
 
+skins = {
+    "Common": [
+        "Sakura Vandal",
+        "Rush Phantom",
+        "Galleria Classic",
+        "Prism Phantom",
+        "Luxe Vandal"
+    ],
+
+    "Rare": [
+        "Prime Vandal",
+        "Ion Phantom",
+        "Gaia Vandal",
+        "Magepunk Sheriff",
+        "Neptune Vandal"
+    ],
+
+    "Epic": [
+        "Reaver Vandal",
+        "Oni Phantom",
+        "Glitchpop Vandal",
+        "Protocol Phantom",
+        "Spectrum Phantom"
+    ],
+
+    "Legendary": [
+        "Prelude To Chaos Vandal",
+        "Araxys Vandal",
+        "Kuronami Vandal",
+        "RGX Vandal",
+        "Elderflame Vandal"
+    ],
+
+    "Mythic": [
+        "Champions 2023 Vandal",
+        "Arcane Sheriff",
+        "Champions Karambit",
+        "Kuronami No Yaiba",
+        "VCT Lock In Knife"
+    ]
+}
+
+rarity_chance = (
+    ["Common"] * 60 +
+    ["Rare"] * 25 +
+    ["Epic"] * 10 +
+    ["Legendary"] * 4 +
+    ["Mythic"] * 1
+)
+
+@bot.command()
+async def case(ctx):
+    user_id = str(ctx.author.id)
+
+    rarity = random.choice(rarity_chance)
+    skin = random.choice(skins[rarity])
+
+    if user_id not in player_inventory:
+        player_inventory[user_id] = []
+
+    player_inventory[user_id].append({
+        "name": skin,
+        "rarity": rarity
+    })
+
+    await ctx.send(
+        f"📦 CASE OPENED!\n\n"
+        f"🎨 Skin: **{skin}**\n"
+        f"💎 Rarity: **{rarity}**"
+    )
+    @bot.command()
+async def inventory(ctx):
+    user_id = str(ctx.author.id)
+
+    if user_id not in player_inventory:
+        await ctx.send("🎒 Inventorius tuščias.")
+        return
+
+    if len(player_inventory[user_id]) == 0:
+        await ctx.send("🎒 Inventorius tuščias.")
+        return
+
+    text = "🎒 INVENTORY\n\n"
+
+    for i, skin in enumerate(player_inventory[user_id], start=1):
+        text += f"{i}. {skin['name']} [{skin['rarity']}]\n"
+
+    await ctx.send(text[:1900])
     await bot.process_commands(message)
 bot.run(DISCORD_TOKEN)
