@@ -1939,7 +1939,61 @@ async def coinflip(ctx, amount: int):
         await ctx.send(
             f"💀 Pralaimėjai!\n⭐ -{amount} XP\nDabar turi **{user_xp[user_id]['xp']} XP**"
         )
+@bot.command()
+async def slots(ctx, amount: int):
+    user_id = str(ctx.author.id)
 
+    if user_id not in user_xp:
+        await ctx.send("❌ Neturi XP.")
+        return
+
+    if amount <= 0:
+        await ctx.send("❌ Įvesk teisingą XP kiekį.")
+        return
+
+    if user_xp[user_id]["xp"] < amount:
+        await ctx.send("❌ Neturi tiek XP.")
+        return
+
+    symbols = ["🍒", "🍋", "🍇", "💎", "⭐"]
+
+    a = random.choice(symbols)
+    b = random.choice(symbols)
+    c = random.choice(symbols)
+
+    result = f"{a} | {b} | {c}"
+
+    if a == b == c:
+        win = amount * 5
+        user_xp[user_id]["xp"] += win
+
+        await ctx.send(
+            f"🎰 {result}\n\n"
+            f"💰 JACKPOT!\n"
+            f"⭐ +{win} XP\n"
+            f"Dabar turi **{user_xp[user_id]['xp']} XP**"
+        )
+
+    elif a == b or b == c or a == c:
+        win = amount * 2
+        user_xp[user_id]["xp"] += win
+
+        await ctx.send(
+            f"🎰 {result}\n\n"
+            f"✅ Laimėjai!\n"
+            f"⭐ +{win} XP\n"
+            f"Dabar turi **{user_xp[user_id]['xp']} XP**"
+        )
+
+    else:
+        user_xp[user_id]["xp"] -= amount
+
+        await ctx.send(
+            f"🎰 {result}\n\n"
+            f"💀 Pralaimėjai!\n"
+            f"⭐ -{amount} XP\n"
+            f"Dabar turi **{user_xp[user_id]['xp']} XP**"
+        )
 
 @bot.command(name="ask", aliases=["ai", "klausimas"])
 async def ask_ai(ctx, *, question: str):
