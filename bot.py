@@ -3054,7 +3054,7 @@ async def on_message(message):
     if message.author.bot:
         return
 
-        user_id = str(message.author.id)
+    user_id = str(message.author.id)
 
     if user_id not in user_xp:
         user_xp[user_id] = {"xp": 0, "level": 1}
@@ -3072,5 +3072,4 @@ async def on_message(message):
         )
 
     await bot.process_commands(message)
-
 bot.run(DISCORD_TOKEN)
