@@ -1552,14 +1552,8 @@ async def top(ctx):
     await ctx.send(f"DEBUG: {user_xp}")
 
 
-    if await handle_rules_accept(message):
-        return
-
-    if await handle_game_role(message, content, user_id):
-        return
-
-    if await handle_no_prefix_valorant(message):
-        return
+@bot.command(name="ask", aliases=["ai", "klausimas"])
+async def ask_ai(ctx, *, question: str):
 
     # ======================
     # VYRAS / PANELĖ
