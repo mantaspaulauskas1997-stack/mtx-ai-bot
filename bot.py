@@ -6,6 +6,7 @@ import requests
 import discord
 import re
 import unicodedata
+import random
 
 from datetime import timedelta
 from urllib.parse import quote
@@ -1908,6 +1909,37 @@ async def xp(ctx):
         f"⭐ {ctx.author.mention} turi **{xp} XP**\n"
         f"🏅 Level: **{level}**"
     )
+
+
+import random
+
+@bot.command()
+async def coinflip(ctx, amount: int):
+    user_id = str(ctx.author.id)
+
+    if user_id not in user_xp:
+        await ctx.send("❌ Neturi XP.")
+        return
+
+    if amount <= 0:
+        await ctx.send("❌ Įvesk teisingą XP kiekį.")
+        return
+
+    if user_xp[user_id]["xp"] < amount:
+        await ctx.send("❌ Neturi tiek XP.")
+        return
+
+    if random.randint(0, 1) == 1:
+        user_xp[user_id]["xp"] += amount
+        await ctx.send(
+            f"🪙 Laimėjai!\n⭐ +{amount} XP\nDabar turi **{user_xp[user_id]['xp']} XP**"
+        )
+    else:
+        user_xp[user_id]["xp"] -= amount
+        await ctx.send(
+            f"💀 Pralaimėjai!\n⭐ -{amount} XP\nDabar turi **{user_xp[user_id]['xp']} XP**"
+        )
+
 
 @bot.command(name="ask", aliases=["ai", "klausimas"])
 async def ask_ai(ctx, *, question: str):
