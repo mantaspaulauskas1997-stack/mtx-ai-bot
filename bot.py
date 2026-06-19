@@ -3216,6 +3216,10 @@ async def on_message(message):
         await message.channel.send(
             f"🎉 {message.author.mention} pasiekė **Level {new_level}**!"
         )
+
+    await bot.process_commands(message)
+
+
 import random
 
 skins = {
@@ -3226,7 +3230,6 @@ skins = {
         "Prism Phantom",
         "Luxe Vandal"
     ],
-
     "Rare": [
         "Prime Vandal",
         "Ion Phantom",
@@ -3234,7 +3237,6 @@ skins = {
         "Magepunk Sheriff",
         "Neptune Vandal"
     ],
-
     "Epic": [
         "Reaver Vandal",
         "Oni Phantom",
@@ -3242,7 +3244,6 @@ skins = {
         "Protocol Phantom",
         "Spectrum Phantom"
     ],
-
     "Legendary": [
         "Prelude To Chaos Vandal",
         "Araxys Vandal",
@@ -3250,7 +3251,6 @@ skins = {
         "RGX Vandal",
         "Elderflame Vandal"
     ],
-
     "Mythic": [
         "Champions 2023 Vandal",
         "Arcane Sheriff",
@@ -3288,7 +3288,8 @@ async def case(ctx):
         f"🎨 Skin: **{skin}**\n"
         f"💎 Rarity: **{rarity}**"
     )
-    @bot.command()
+
+@bot.command()
 async def inventory(ctx):
     user_id = str(ctx.author.id)
 
@@ -3306,5 +3307,5 @@ async def inventory(ctx):
         text += f"{i}. {skin['name']} [{skin['rarity']}]\n"
 
     await ctx.send(text[:1900])
-    await bot.process_commands(message)
+
 bot.run(DISCORD_TOKEN)
