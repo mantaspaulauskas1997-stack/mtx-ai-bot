@@ -3062,5 +3062,22 @@ async def checkroles(ctx):
     await ctx.send(
         f"✅ Patikrinta: {updated}\n❌ Klaidų: {failed}"
     )
+@bot.command()
+async def top(ctx):
+    if not user_xp:
+        await ctx.send("❌ Nėra XP duomenų.")
+        return
 
+    sorted_users = sorted(
+        user_xp.items(),
+        key=lambda x: x[1]["xp"],
+        reverse=True
+    )
+
+    text = "🏆 XP TOP 10\n\n"
+
+    for i, (user_id, data) in enumerate(sorted_users[:10], start=1):
+        text += f"{i}. <@{user_id}> — {data['xp']} XP\n"
+
+    await ctx.send(text)
 bot.run(DISCORD_TOKEN)
