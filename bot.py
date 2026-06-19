@@ -3044,6 +3044,9 @@ async def top(ctx):
     for i, (user_id, data) in enumerate(sorted_users[:10], start=1):
         text += f"{i}. <@{user_id}> — {data['xp']} XP\n"
 
+    await ctx.send(text)
+
+
 @bot.event
 async def on_message(message):
     if message.author.bot:
@@ -3056,5 +3059,7 @@ async def on_message(message):
 
     user_xp[user_id]["xp"] += 5
 
-    await bot.process_commands(message)    await ctx.send(text)
+    await bot.process_commands(message)
+
+
 bot.run(DISCORD_TOKEN)
