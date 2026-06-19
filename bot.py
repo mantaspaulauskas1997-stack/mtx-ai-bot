@@ -1927,6 +1927,21 @@ async def rank(ctx):
         f"🎯 Rangas: **{rank_name}**\n"
         f"⭐ XP: **{xp}**"
     )
+
+@bot.command()
+async def xp(ctx):
+    user_id = str(ctx.author.id)
+
+    if user_id not in user_xp:
+        await ctx.send("❌ Neturi XP.")
+        return
+
+    xp = user_xp[user_id]["xp"]
+
+    await ctx.send(
+        f"⭐ {ctx.author.mention} turi **{xp} XP**"
+    )
+
 @bot.command(name="ask", aliases=["ai", "klausimas"])
 async def ask_ai(ctx, *, question: str):
     user_id = ctx.author.id
