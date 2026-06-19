@@ -1909,16 +1909,10 @@ async def set_main_agent(ctx, agent: str):
 
     if agent not in valid_agents:
         await ctx.send(
-            "❌ Neteisingas agentas.\n\n"
-            f"Galimi: {', '.join(valid_agents)}"
-        )
-        return
+    f"✅ {ctx.author.mention} pasirinko pagrindinį agentą: **{agent.title()}**"
+)
 
-    main_agents[str(ctx.author.id)] = agent
-
-    await ctx.send(
-        f"✅ {ctx.author.mention} pasirinko pagrindinį agentą: **{agent.title()}**"
-    @bot.command()
+@bot.command()
 async def rank(ctx):
     user_id = str(ctx.author.id)
 
