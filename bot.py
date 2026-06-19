@@ -3054,24 +3054,23 @@ async def on_message(message):
     if message.author.bot:
         return
 
-    user_id = str(message.author.id)
+        user_id = str(message.author.id)
 
     if user_id not in user_xp:
-    user_xp[user_id] = {"xp": 0, "level": 1}
+        user_xp[user_id] = {"xp": 0, "level": 1}
 
-old_level = user_xp[user_id].get("level", 1)
+    old_level = user_xp[user_id].get("level", 1)
 
-user_xp[user_id]["xp"] += 5
+    user_xp[user_id]["xp"] += 5
 
-new_level = (user_xp[user_id]["xp"] // 100) + 1
-user_xp[user_id]["level"] = new_level
+    new_level = (user_xp[user_id]["xp"] // 100) + 1
+    user_xp[user_id]["level"] = new_level
 
-if new_level > old_level:
-    await message.channel.send(
-        f"🎉 {message.author.mention} pasiekė **Level {new_level}**!"
-    )
+    if new_level > old_level:
+        await message.channel.send(
+            f"🎉 {message.author.mention} pasiekė **Level {new_level}**!"
+        )
 
     await bot.process_commands(message)
-
 
 bot.run(DISCORD_TOKEN)
