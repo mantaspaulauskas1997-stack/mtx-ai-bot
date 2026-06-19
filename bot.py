@@ -1526,14 +1526,15 @@ async def on_message(message: discord.Message):
         return
 
     content = message.content.lower().strip()
-user_id = message.author.id
+    user_id = message.author.id
 
-if str(user_id) not in user_xp:
-    user_xp[str(user_id)] = {"xp": 0, "level": 1}
+    if str(user_id) not in user_xp:
+        user_xp[str(user_id)] = {"xp": 0, "level": 1}
 
-user_xp[str(user_id)]["xp"] += 5
-if await handle_spam(message):
-    return
+    user_xp[str(user_id)]["xp"] += 5
+
+    if await handle_spam(message):
+        return
 
     if await handle_profanity(message):
         return
