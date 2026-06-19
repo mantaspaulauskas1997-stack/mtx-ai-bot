@@ -2057,7 +2057,6 @@ await ctx.send(
     f"{result}\n"
     f"⭐ XP: **{user_xp[user_id]['xp']}**"
 )
-```
 
 @bot.command(name="ask", aliases=["ai", "klausimas"])
 async def ask_ai(ctx, *, question: str):
