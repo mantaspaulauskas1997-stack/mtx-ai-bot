@@ -2035,13 +2035,7 @@ elif dealer_total > 21:
 
 elif player_total > dealer_total:
     user_xp[user_id]["xp"] += amount
-
-    if user_id not in blackjack_xp:
-        blackjack_xp[user_id] = 0
-
-    blackjack_xp[user_id] += 25
-
-    result = f"🏆 Laimėjai! +{amount} XP (+25 BJ XP)"
+    result = f"🏆 Laimėjai! +{amount} XP"
 
 elif player_total < dealer_total:
     user_xp[user_id]["xp"] -= amount
@@ -2057,6 +2051,7 @@ await ctx.send(
     f"{result}\n"
     f"⭐ XP: **{user_xp[user_id]['xp']}**"
 )
+```
 
 @bot.command(name="ask", aliases=["ai", "klausimas"])
 async def ask_ai(ctx, *, question: str):
