@@ -2022,14 +2022,17 @@ async def blackjack(ctx, amount: int):
     dealer_total = dealer1 + dealer2
 
     if player_total > 21 and dealer_total > 21:
-        result = "🤝 Abu sudegėte!"
-    elif player_total > 21:
-        user_xp[user_id]["xp"] -= amount
-        result = f"💀 Sudegėte! -{amount} XP"
-    elif dealer_total > 21:
-        user_xp[user_id]["xp"] += amount
-        result = f"🏆 Dealeris sudegė! +{amount} XP"
-    elif player_total > dealer_total:
+    result = "🤝 Abu sudegėte!"
+
+elif player_total > 21:
+    user_xp[user_id]["xp"] -= amount
+    result = f"💀 Sudegėte! -{amount} XP"
+
+elif dealer_total > 21:
+    user_xp[user_id]["xp"] += amount
+    result = f"🏆 Dealeris sudegė! +{amount} XP"
+
+elif player_total > dealer_total:
     user_xp[user_id]["xp"] += amount
 
     if user_id not in blackjack_xp:
@@ -2038,10 +2041,13 @@ async def blackjack(ctx, amount: int):
     blackjack_xp[user_id] += 25
 
     result = f"🏆 Laimėjai! +{amount} XP (+25 BJ XP)"
-        user_xp[user_id]["xp"] -= amount
-        result = f"💀 Pralaimėjai! -{amount} XP"
-    else:
-        result = "🤝 Lygiosios!"
+
+elif player_total < dealer_total:
+    user_xp[user_id]["xp"] -= amount
+    result = f"💀 Pralaimėjai! -{amount} XP"
+
+else:
+    result = "🤝 Lygiosios!"
 
     await ctx.send(
         f"🃏 **BLACKJACK**\n\n"
