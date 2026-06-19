@@ -1996,32 +1996,33 @@ async def slots(ctx, amount: int):
         )
 @bot.command()
 async def blackjack(ctx, amount: int):
-    user_id = str(ctx.author.id)
+user_id = str(ctx.author.id)
 
-    if user_id not in user_xp:
-        await ctx.send("❌ Neturi XP.")
-        return
+```
+if user_id not in user_xp:
+    await ctx.send("❌ Neturi XP.")
+    return
 
-    if amount <= 0:
-        await ctx.send("❌ Blogas XP kiekis.")
-        return
+if amount <= 0:
+    await ctx.send("❌ Blogas XP kiekis.")
+    return
 
-    if user_xp[user_id]["xp"] < amount:
-        await ctx.send("❌ Neturi tiek XP.")
-        return
+if user_xp[user_id]["xp"] < amount:
+    await ctx.send("❌ Neturi tiek XP.")
+    return
 
-    cards = [2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10, 11]
+cards = [2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10, 11]
 
-    player1 = random.choice(cards)
-    player2 = random.choice(cards)
+player1 = random.choice(cards)
+player2 = random.choice(cards)
 
-    dealer1 = random.choice(cards)
-    dealer2 = random.choice(cards)
+dealer1 = random.choice(cards)
+dealer2 = random.choice(cards)
 
-    player_total = player1 + player2
-    dealer_total = dealer1 + dealer2
+player_total = player1 + player2
+dealer_total = dealer1 + dealer2
 
-    if player_total > 21 and dealer_total > 21:
+if player_total > 21 and dealer_total > 21:
     result = "🤝 Abu sudegėte!"
 
 elif player_total > 21:
@@ -2049,13 +2050,14 @@ elif player_total < dealer_total:
 else:
     result = "🤝 Lygiosios!"
 
-    await ctx.send(
-        f"🃏 **BLACKJACK**\n\n"
-        f"👤 Tavo kortos: {player1} + {player2} = **{player_total}**\n"
-        f"🤖 Dealerio kortos: {dealer1} + {dealer2} = **{dealer_total}**\n\n"
-        f"{result}\n"
-        f"⭐ XP: **{user_xp[user_id]['xp']}**"
-    )
+await ctx.send(
+    f"🃏 **BLACKJACK**\n\n"
+    f"👤 Tavo kortos: {player1} + {player2} = **{player_total}**\n"
+    f"🤖 Dealerio kortos: {dealer1} + {dealer2} = **{dealer_total}**\n\n"
+    f"{result}\n"
+    f"⭐ XP: **{user_xp[user_id]['xp']}**"
+)
+```
 @bot.command(name="ask", aliases=["ai", "klausimas"])
 async def ask_ai(ctx, *, question: str):
     user_id = ctx.author.id
