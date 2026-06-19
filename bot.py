@@ -2030,9 +2030,14 @@ async def blackjack(ctx, amount: int):
         user_xp[user_id]["xp"] += amount
         result = f"🏆 Dealeris sudegė! +{amount} XP"
     elif player_total > dealer_total:
-        user_xp[user_id]["xp"] += amount
-        result = f"🏆 Laimėjai! +{amount} XP"
-    elif player_total < dealer_total:
+    user_xp[user_id]["xp"] += amount
+
+    if user_id not in blackjack_xp:
+        blackjack_xp[user_id] = 0
+
+    blackjack_xp[user_id] += 25
+
+    result = f"🏆 Laimėjai! +{amount} XP (+25 BJ XP)"
         user_xp[user_id]["xp"] -= amount
         result = f"💀 Pralaimėjai! -{amount} XP"
     else:
