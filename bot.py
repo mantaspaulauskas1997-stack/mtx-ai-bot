@@ -3044,5 +3044,17 @@ async def top(ctx):
     for i, (user_id, data) in enumerate(sorted_users[:10], start=1):
         text += f"{i}. <@{user_id}> — {data['xp']} XP\n"
 
-    await ctx.send(text)
+@bot.event
+async def on_message(message):
+    if message.author.bot:
+        return
+
+    user_id = str(message.author.id)
+
+    if user_id not in user_xp:
+        user_xp[user_id] = {"xp": 0, "level": 1}
+
+    user_xp[user_id]["xp"] += 5
+
+    await bot.process_commands(message)    await ctx.send(text)
 bot.run(DISCORD_TOKEN)
